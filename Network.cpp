@@ -27,6 +27,10 @@ void Network::classify(double input) {
 	feedforward(temp);
 }
 
+void Network::classify(vector<double> input) {
+	feedforward(input);
+}
+
 vector<double> Network::feedforward(vector<double> input) {
 	vector<double> temp;
 	temp = input;
@@ -48,6 +52,17 @@ void Network::train(double input, double actual) {
 	vector<double> temp, output, error;
 	for (unsigned int i = 0; i < layers[0]->neurons.size(); i++) temp.push_back(input);
 	output = feedforward(temp);
+
+	// get error with respect to each of the output nodes
+	for (unsigned int i = 0; i < output.size(); i++) {
+		error.push_back(output[i] - actual);
+		cout << "Output Neuron " << i << " error " << error[i] << endl;
+	}
+	backpropagate(error);
+}
+
+void Network::train(vector<double> input, double actual) {
+	output = feedforward(input);
 
 	// get error with respect to each of the output nodes
 	for (unsigned int i = 0; i < output.size(); i++) {
