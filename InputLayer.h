@@ -20,7 +20,7 @@ public:
 	InputLayer(int w, int d, double range, bool db);
 	virtual ~InputLayer();
 	vector<double> feedforward(vector<double> input);
-	vector<double> backpropagate(vector<double> error, double learningRate);
+	vector<double> backpropagate(vector<double> errorPrime, double learningRate);
 };
 
 #endif /* INPUTLAYER_H_ */

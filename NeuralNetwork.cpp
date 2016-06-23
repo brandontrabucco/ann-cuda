@@ -69,21 +69,21 @@ void NeuralNetwork::train(vector<double> input, vector<double> actual) {
 		cout << "Illegal Argument at Network::train(vector<double> input, vector<double> actual)" << endl;
 		return;
 	} else {
-		vector<double> output, error;
+		vector<double> output, errorPrime;
 		output = feedforward(input);
 
 		// get error with respect to each of the output nodes
 		for (unsigned int i = 0; i < output.size(); i++) {
-			error.push_back(output[i] - actual[i]);
-			if (debug) cout << "Output Neuron " << i << " error " << error[i] << endl;
+			errorPrime.push_back((output[i] - actual[i]) * output[i] * (1 - output[i]));
+			if (debug) cout << "Output Neuron " << i << " errorPrime " << errorPrime[i] << endl;
 		}
-		backpropagate(error);
+		backpropagate(errorPrime);
 	}
 }
 
-void NeuralNetwork::backpropagate(vector<double> error) {
+void NeuralNetwork::backpropagate(vector<double> errorPrime) {
 	vector<double>  temp;
-	temp = error;
+	temp = errorPrime;
 	// propagate the percent error to previous layers based on their relative weights to the output
 	for (int i = (layers.size() - 1); i >= 0; i--) {
 		if (debug) cout << "Backpropagation on layer " << i << " starting" << endl;

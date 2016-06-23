@@ -46,7 +46,7 @@ vector<double> InputLayer::feedforward(vector<double> input) {
 	} return output;
 }
 
-vector<double> InputLayer::backpropagate(vector<double> error, double learningRate) {
+vector<double> InputLayer::backpropagate(vector<double> errorPrime, double learningRate) {
 	vector<double> sum;
 	// iterate through each synapse connected to the next layer
 	for (int i = 0; i < depth; i++) {
@@ -55,14 +55,14 @@ vector<double> InputLayer::backpropagate(vector<double> error, double learningRa
 		for (int j = 0; j < width; j++) {
 			if (i == 0) sum.push_back(0);
 			// update the weight and bias variables
-			synapses[(j * depth) + i]->weightedError = error[i] * synapses[(j * depth) + i]->weight / weightSum;
-			synapses[(j * depth) + i]->weight -= learningRate * neurons[j]->activation * synapses[(j * depth) + i]->weightedError;
-			synapses[(j * depth) + i]->bias -= learningRate * synapses[(j * depth) + i]->weightedError;
+			synapses[(j * depth) + i]->weightedErrorPrime = errorPrime[i] * synapses[(j * depth) + i]->weight / weightSum;
+			synapses[(j * depth) + i]->weight -= learningRate * neurons[j]->activation * synapses[(j * depth) + i]->weightedErrorPrime;
+			synapses[(j * depth) + i]->bias -= learningRate * synapses[(j * depth) + i]->weightedErrorPrime;
 
 			if (debug) cout << "Synapse " << synapses[(j * depth) + i]->index << " updating at " << ((j * depth) + i) << endl;
 
 			// sum up the total weighted error for each neuron (potentially take the average)
-			sum[j] += synapses[(j * depth) + i]->weightedError;
+			sum[j] += synapses[(j * depth) + i]->weightedErrorPrime;
 			//if (i == (width - 1)) sum[j] /= depth;
 		}
 	} return sum;

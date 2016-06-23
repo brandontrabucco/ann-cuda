@@ -16,7 +16,7 @@ public:
 	double bias;
 	double input;
 	double output;
-	double weightedError;
+	double weightedErrorPrime;
 	int index;
 	Synapse();
 	virtual ~Synapse();

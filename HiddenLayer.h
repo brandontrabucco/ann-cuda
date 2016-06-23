@@ -21,7 +21,7 @@ public:
 	HiddenLayer(int w, int d, bool db);
 	virtual ~HiddenLayer();
 	vector<double> feedforward(vector<double> input);
-	vector<double> backpropagate(vector<double> error, double learningRate);
+	vector<double> backpropagate(vector<double> errorPrime, double learningRate);
 };
 
 #endif /* HIDDENLAYER_H_ */
