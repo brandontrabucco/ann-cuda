@@ -7,18 +7,23 @@
 
 #include "HiddenLayer.h"
 
-HiddenLayer::HiddenLayer(int w, int d) {
+HiddenLayer::HiddenLayer(int w, int d, bool db) {
 	// TODO Auto-generated constructor stub
+	debug = db;
 	width = w;
 	depth = d;
 
 	// add neurons and synapses to this layer
 	for (int i = 0; i < w; i++) {
-		neurons.push_back(new Neuron());
-		cout << "Neuron created " << i << endl;
+		Neuron *n = new Neuron();
+		n->index = i;
+		neurons.push_back(n);
+		if (debug) cout << "Neuron created " << i << endl;
 	} for (int i = 0; i < (w * d); i++) {
-		synapses.push_back(new Synapse());
-		cout << "Synapse created " << i << endl;
+		Synapse *s = new Synapse();
+		s->index = i;
+		synapses.push_back(s);
+		if (debug) cout << "Synapse created " << i << endl;
 	}
 }
 
@@ -32,17 +37,18 @@ vector<double> HiddenLayer::feedforward(vector<double> input) {
 		sum.push_back(0);
 		for (unsigned int j = 0; j < (input.size() / width); j++) {
 			sum[i] += input[(i * (input.size() / width)) + j];
+			if (debug) cout << "Neuron " << i << " summing index " << (i * (input.size() / width)) + j << endl;
 		}
 	} for (int i = 0; i < width; i++) {
 		// data is scaled, aligned, and summed
 		// compute current layer neural activation
 		temp.push_back(neurons[i]->get(sum[i]));
-		cout << "Neuron " << i << " activating by " << temp[i] << endl;
+		if (debug) cout << "Neuron " << neurons[i]->index << " activating at " << i << endl;
 	} for (int i = 0; i < depth; i++) {	// iterate through each synapse
 		for (int j = 0; j < width; j++) {
 			// each current neuron has as many synapses as there are neurons in next layer
 			output.push_back(synapses[(j * depth) + i]->get(temp[j]));
-			cout << "Synapse " << ((j * depth) + i) << " receiving " << temp[j] << " outputing " << output[output.size() - 1] << endl;
+			if (debug) cout << "Synapse " << synapses[(j * depth) + i]->index << " activating at " << ((j * depth) + i) << " index " << ((i * width) + j) << endl;
 		}
 	} return output;
 }
@@ -60,9 +66,11 @@ vector<double> HiddenLayer::backpropagate(vector<double> error, double learningR
 			synapses[(j * depth) + i]->weight -= learningRate * neurons[j]->activation * synapses[(j * depth) + i]->weightedError;
 			synapses[(j * depth) + i]->bias -= learningRate * synapses[(j * depth) + i]->weightedError;
 
+			if (debug) cout << "Synapse " << synapses[(j * depth) + i]->index << " updating at " << ((j * depth) + i) << endl;
+
 			// sum up the total weighted error for each neuron (potentially take the average)
 			sum[j] += synapses[(j * depth) + i]->weightedError;
-			if (i == (width - 1)) sum[j] /= depth;
+			//if (i == (width - 1)) sum[j] /= depth;
 		}
 	} return sum;
 }

@@ -17,6 +17,7 @@ public:
 	double input;
 	double output;
 	double weightedError;
+	int index;
 	Synapse();
 	virtual ~Synapse();
 	double get(double i);

@@ -12,7 +12,9 @@
 
 class Neuron {
 public:
-	double activation, derivative;
+	double activation;
+	double derivative;
+	int index;
 	Neuron();
 	virtual ~Neuron();
 	virtual double get(double input);
