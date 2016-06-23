@@ -62,6 +62,7 @@ void Network::train(double input, double actual) {
 }
 
 void Network::train(vector<double> input, double actual) {
+	vector<double> output, error;
 	output = feedforward(input);
 
 	// get error with respect to each of the output nodes
@@ -73,7 +74,7 @@ void Network::train(vector<double> input, double actual) {
 }
 
 void Network::backpropagate(vector<double> error) {
-	vector<double>  temp;
+	vector<double> temp;
 	temp = error;
 	// propagate the percent error to previous layers based on their relative weights to the output
 	for (int i = (layers.size() - 1); i >= 0; i--) {
