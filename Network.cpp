@@ -28,7 +28,8 @@ void Network::classify(double input) {
 }
 
 void Network::classify(vector<double> input) {
-	feedforward(input);
+	if (input.size() == layers[0]->neurons.size()) feedforward(input);
+	else cout << "Illegal Argument at Network::classify(vector<double> input)" << endl;
 }
 
 vector<double> Network::feedforward(vector<double> input) {
@@ -61,20 +62,26 @@ void Network::train(double input, double actual) {
 	backpropagate(error);
 }
 
-void Network::train(vector<double> input, double actual) {
-	vector<double> output, error;
-	output = feedforward(input);
+void Network::train(vector<double> input, vector<double> actual) {
+	if (input.size() != layers[0]->neurons.size() ||
+			actual.size() != layers[layers.size() - 1]->neurons.size()) {
+		cout << "Illegal Argument at Network::train(vector<double> input, vector<double> actual)" << endl;
+		return;
+	} else {
+		vector<double> output, error;
+		output = feedforward(input);
 
-	// get error with respect to each of the output nodes
-	for (unsigned int i = 0; i < output.size(); i++) {
-		error.push_back(output[i] - actual);
-		cout << "Output Neuron " << i << " error " << error[i] << endl;
+		// get error with respect to each of the output nodes
+		for (unsigned int i = 0; i < output.size(); i++) {
+			error.push_back(output[i] - actual[i]);
+			cout << "Output Neuron " << i << " error " << error[i] << endl;
+		}
+		backpropagate(error);
 	}
-	backpropagate(error);
 }
 
 void Network::backpropagate(vector<double> error) {
-	vector<double> temp;
+	vector<double>  temp;
 	temp = error;
 	// propagate the percent error to previous layers based on their relative weights to the output
 	for (int i = (layers.size() - 1); i >= 0; i--) {

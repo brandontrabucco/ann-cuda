@@ -25,7 +25,7 @@ public:
 	void classify(double input);
 	void classify(vector<double> input);
 	void train(double input, double actual);
-	void train(vector<double> input, double actual);
+	void train(vector<double> input, vector<double> actual);
 };
 
 #endif /* NETWORK_H_ */
