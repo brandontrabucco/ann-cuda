@@ -51,10 +51,12 @@ vector<double> HiddenLayer::backpropagate(vector<double> error, double learningR
 	vector<double> sum;
 	// iterate through each synapse connected to the next layer
 	for (int i = 0; i < depth; i++) {
+		double weightSum = 0;
+		for (int j = 0; j < width; j++) weightSum += synapses[(j * depth) + i]->weight;
 		for (int j = 0; j < width; j++) {
 			if (i == 0) sum.push_back(0);
 			// update the weight and bias variables (need to take the weighted error in proportion to the sum of weights to a neuron)
-			synapses[(j * depth) + i]->weightedError = error[i] * synapses[(j * depth) + i]->weight;
+			synapses[(j * depth) + i]->weightedError = error[i] * synapses[(j * depth) + i]->weight / weightSum;
 			synapses[(j * depth) + i]->weight -= learningRate * neurons[j]->activation * synapses[(j * depth) + i]->weightedError;
 			synapses[(j * depth) + i]->bias -= learningRate * synapses[(j * depth) + i]->weightedError;
 
