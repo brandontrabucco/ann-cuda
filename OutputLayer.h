@@ -12,8 +12,9 @@
 
 class OutputLayer: public Layer {
 public:
+	bool debug;
 	int width;
-	OutputLayer(int w);
+	OutputLayer(int w, bool d);
 	virtual ~OutputLayer();
 	vector<double> feedforward(vector<double> input);
 	vector<double> backpropagate(vector<double> error, double learningRate);

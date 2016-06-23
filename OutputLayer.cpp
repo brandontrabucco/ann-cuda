@@ -7,14 +7,17 @@
 
 #include "OutputLayer.h"
 
-OutputLayer::OutputLayer(int w) {
+OutputLayer::OutputLayer(int w, bool d) {
 	// TODO Auto-generated constructor stub
+	debug = d;
 	width = w;
 
 	// add neurons to this layer
 	for (int i = 0; i < w; i++) {
-		neurons.push_back(new Neuron());
-		cout << "Neuron created " << i << endl;
+		Neuron *n = new Neuron();
+		n->index = i;
+		neurons.push_back(n);
+		if (debug) cout << "Neuron created " << i << endl;
 	}
 }
 
@@ -30,7 +33,7 @@ vector<double> OutputLayer::feedforward(vector<double> input) {
 			sum[i] += input[(i * (input.size() / width)) + j];
 		}
 		output.push_back(neurons[i]->get(sum[i]));
-		cout << "Neuron " << i << " activating by " << output[i] << endl;
+		if (debug) cout << "Neuron " << i << " activating by " << output[i] << endl;
 	} return output;
 }
 
