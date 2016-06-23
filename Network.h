@@ -23,7 +23,9 @@ public:
 	Network(vector<int> size, double range, double rate);
 	virtual ~Network();
 	void classify(double input);
+	void classify(vector<double> input);
 	void train(double input, double actual);
+	void train(vector<double> input, double actual);
 };
 
 #endif /* NETWORK_H_ */
