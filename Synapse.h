@@ -9,16 +9,22 @@
 #define SYNAPSE_H_
 
 #include <stdlib.h>
+#include <time.h>
+#include <iostream>
+#include <random>
+
+using namespace std;
 
 class Synapse {
+private:
 public:
 	double weight;
 	double bias;
 	double input;
 	double output;
-	double weightedErrorPrime;
+	double weightedError;
 	int index;
-	Synapse();
+	Synapse(int s);
 	virtual ~Synapse();
 	double get(double i);
 };

@@ -13,11 +13,12 @@
 class OutputLayer: public Layer {
 public:
 	bool debug;
-	int width;
-	OutputLayer(int w, bool d);
+	int currentLayerNeurons;
+	int previousLayerNeurons;
+	OutputLayer(int w, int d, bool db);
 	virtual ~OutputLayer();
 	vector<double> feedforward(vector<double> input);
-	vector<double> backpropagate(vector<double> error, double learningRate);
+	vector<double> backpropagate(vector<double> error, double learningRate, vector<Neuron *> previousLayer);
 };
 
 #endif /* OUTPUTLAYER_H_ */

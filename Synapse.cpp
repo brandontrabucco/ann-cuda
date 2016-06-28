@@ -7,10 +7,12 @@
 
 #include "Synapse.h"
 
-Synapse::Synapse() {
+Synapse::Synapse(int s) {
 	// TODO Auto-generated constructor stub
+	srand(time(0) + s);
 	weight = (double)rand() / (double)RAND_MAX;
 	bias =(double)rand() / (double)RAND_MAX;
+	weightedError = 0;
 }
 
 Synapse::~Synapse() {
