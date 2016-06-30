@@ -5,7 +5,7 @@
  *      Author: trabucco
  */
 
-#include "PassiveNeuron.h"
+#include "PassiveNeuron.cuh"
 
 PassiveNeuron::PassiveNeuron() : Neuron() {
 	// TODO Auto-generated constructor stub
@@ -17,9 +17,12 @@ PassiveNeuron::~PassiveNeuron() {
 }
 
 double PassiveNeuron::get(double input, double scalar) {
-	return input * scalar;
+	activation = input * scalar;
+	slope(scalar);
+	return activation;
 }
 
 double PassiveNeuron::slope(double scalar) {
+	derivative = scalar;
 	return scalar;
 }

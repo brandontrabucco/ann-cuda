@@ -8,8 +8,8 @@
 #ifndef LAYER_H_
 #define LAYER_H_
 
-#include "Neuron.h"
-#include "Synapse.h"
+#include "Neuron.cuh"
+#include "Synapse.cuh"
 #include <vector>
 #include <iostream>
 
@@ -17,8 +17,8 @@ using namespace std;
 
 class Layer {
 public:
-	vector<Neuron *> neurons;
-	vector<Synapse *> synapses;
+	vector<Neuron> neurons;
+	vector<Synapse> synapses;
 	Layer();
 	virtual ~Layer();
 	virtual vector<double> feedforward(vector<double> input);

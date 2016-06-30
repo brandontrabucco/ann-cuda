@@ -5,12 +5,17 @@
  *      Author: trabucco
  */
 
-#include "Synapse.h"
+#include "Synapse.cuh"
+
+normal_distribution<double> Synapse::d(0, 1);
+
+default_random_engine Synapse::g;
 
 Synapse::Synapse() {
 	// TODO Auto-generated constructor stub
-	weight = (double)rand() / (double)RAND_MAX;
-	bias =(double)rand() / (double)RAND_MAX;
+	weight = d(g);
+	bias = 0;
+	weightedError = 0;
 }
 
 Synapse::~Synapse() {
