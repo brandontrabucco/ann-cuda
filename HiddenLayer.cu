@@ -7,36 +7,6 @@
 
 #include "HiddenLayer.cuh"
 
-__global__ void activateNeuron(double *input, Neuron nodes[], double *output) {
-	int idx = (blockIdx.x * blockDim.x) + threadIdx.x;	// the current layer neurons
-	output[idx] = (nodes[idx]).get(input[idx]);
-}
-
-__global__ void activateSynapse(double *input, Synapse connections[], double *output) {
-	int idx = (blockIdx.x * blockDim.x) + threadIdx.x;	// the current layer
-	int idy = (blockIdx.y * blockDim.y) + threadIdx.y;	// the previous layer
-	output[(idx * (gridDim.y * blockDim.y)) + idy] = (connections[(idx * (gridDim.y * blockDim.y)) + idy]).get(input[idy]);
-}
-
-__global__ void sumInputFromSynapse(double *input, double *output) {
-	int idx = (blockIdx.x * blockDim.x) + threadIdx.x;	// the current layer
-	int idy = (blockIdx.y * blockDim.y) + threadIdx.y;	// the previous layer
-	output[idx] += input[(idx * (gridDim.y * blockDim.y)) + idy];
-}
-
-__global__ void gradientDescent(double *error, double learningRate, Neuron nodes[], Neuron previous[], Synapse connections[]) {
-	int idx = (blockIdx.x * blockDim.x) + threadIdx.x;	// the current layer
-	int idy = (blockIdx.y * blockDim.y) + threadIdx.y;	// the previous layer
-	connections[(idx * (gridDim.y * blockDim.y)) + idy].weight -= learningRate * error[idx] * nodes[idx].derivative * previous[idy].activation;
-	//connections[(idx * (gridDim.y * blockDim.y)) + idy].bias -= learningRate * error[idx] * nodes[idx].derivative;
-}
-
-__global__ void sumWeightedError(double *error, Neuron nodes[], Synapse connections[], double *output) {
-	int idx = (blockIdx.x * blockDim.x) + threadIdx.x;	// the current layer
-	int idy = (blockIdx.y * blockDim.y) + threadIdx.y;	// the previous layer
-	output[idy] += ((error[idx] * nodes[idx].derivative) * connections[(idx * (gridDim.y * blockDim.y)) + idy].weight) + connections[(idx * (gridDim.y * blockDim.y)) + idy].bias;
-}
-
 HiddenLayer::HiddenLayer(int w, int d, bool db) {
 	// TODO Auto-generated constructor stub
 	debug = db;
@@ -64,30 +34,46 @@ HiddenLayer::~HiddenLayer() {
 // parallelize each synapse and neuron
 
 vector<double> HiddenLayer::feedforward(vector<double> input) {
-	vector<double> sum(currentLayerNeurons), output(synapses.size());	// variables to store data for math operations
+	vector<double> output(currentLayerNeurons);	// variables to store data for math operations
 
 	double *deviceInput, *deviceOutput, *deviceSum, *deviceActivation;
 	Synapse *deviceSynapses;
 	Neuron *deviceNeurons;
 
 	// copy memory to device
-	cudaMalloc((void **)&deviceInput, (input.size() * sizeof(double)));
-	cudaMalloc((void **)&deviceOutput, (synapses.size() * sizeof(double)));
-	cudaMalloc((void **)&deviceSum, (neurons.size() * sizeof(double)));
-	cudaMalloc((void **)&deviceActivation, (neurons.size() * sizeof(double)));
-	cudaMalloc((void **)&deviceSynapses, (synapses.size() * sizeof(Synapse)));
-	cudaMalloc((void **)&deviceNeurons, (neurons.size() * sizeof(Neuron)));
-	cudaMemcpy(deviceInput, &input[0], (input.size() * sizeof(double)), cudaMemcpyHostToDevice);
-	cudaMemcpy(deviceSynapses, &synapses[0], (synapses.size() * sizeof(Synapse)), cudaMemcpyHostToDevice);
-	cudaMemcpy(deviceNeurons, &neurons[0], (neurons.size() * sizeof(Neuron)), cudaMemcpyHostToDevice);
-	cudaMemset(deviceSum, 0, (neurons.size() * sizeof(double)));
+	if (cudaMalloc((void **)&deviceInput, (input.size() * sizeof(double))) != 0) cout << "error 1" << endl;
+	if (cudaMalloc((void **)&deviceOutput, (synapses.size() * sizeof(double))) != 0) cout << "error 2" << endl;
+	if (cudaMalloc((void **)&deviceSum, (neurons.size() * sizeof(double))) != 0) cout << "error 3" << endl;
+	if (cudaMalloc((void **)&deviceActivation, (neurons.size() * sizeof(double))) != 0) cout << "error 4" << endl;
+	if (cudaMalloc((void **)&deviceSynapses, (synapses.size() * sizeof(Synapse))) != 0) cout << "error 5" << endl;
+	if (cudaMalloc((void **)&deviceNeurons, (neurons.size() * sizeof(Neuron))) != 0) cout << "error 6" << endl;
 
-	activateSynapse<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceInput, deviceSynapses, deviceOutput);
-	sumInputFromSynapse<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceOutput, deviceSum);
-	activateNeuron<<<dim3(1, 1), dim3(currentLayerNeurons, 1)>>>(deviceSum, deviceNeurons, deviceActivation);
+	if (cudaMemcpy(&deviceInput[0], &input[0], (input.size() * sizeof(double)), cudaMemcpyHostToDevice) != 0) cout << "error 7" << endl;
+	if (cudaMemcpy(&deviceSynapses[0], &synapses[0], (synapses.size() * sizeof(Synapse)), cudaMemcpyHostToDevice) != 0) cout << "error 8" << endl;
+	if (cudaMemcpy(&deviceNeurons[0], &neurons[0], (neurons.size() * sizeof(Neuron)), cudaMemcpyHostToDevice) != 0) cout << "error 9" << endl;
+	if (cudaMemset(&deviceSum[0], 0, (neurons.size() * sizeof(double))) != 0) cout << "error 10" << endl;
+
+	cudaDeviceSynchronize();
+	activateSynapse<<<dim3(round(sqrt(currentLayerNeurons)), round(sqrt(currentLayerNeurons))), dim3(round(sqrt(previousLayerNeurons)), round(sqrt(previousLayerNeurons)))>>>(deviceInput, deviceSynapses, deviceOutput);	// a block represents current layer, thread is previous layer
+	cudaDeviceSynchronize();
+	sumInputFromSynapse<<<dim3(round(sqrt(currentLayerNeurons)), round(sqrt(currentLayerNeurons))), dim3(round(sqrt(previousLayerNeurons)), round(sqrt(previousLayerNeurons)))>>>(deviceOutput, deviceSum);
+	cudaDeviceSynchronize();
+	activateNeuron<<<dim3(1, 1), dim3(round(sqrt(currentLayerNeurons)), round(sqrt(currentLayerNeurons)))>>>(deviceSum, deviceNeurons, deviceActivation);
+	cudaDeviceSynchronize();
+
 
 	// get the output from the device
-	cudaMemcpy(&output[0], &deviceActivation[0],(neurons.size() * sizeof(double)), cudaMemcpyDeviceToHost);
+	if (cudaMemcpy(&output[0], &deviceActivation[0],(neurons.size() * sizeof(double)), cudaMemcpyDeviceToHost) != 0) cout << "error 11" << endl;
+	cudaDeviceSynchronize();
+
+	// release memory from GPU
+	if (cudaFree(deviceInput) != 0) cout << "error 12" << endl;
+	if (cudaFree(deviceOutput) != 0) cout << "error 13" << endl;
+	if (cudaFree(deviceSum) != 0) cout << "error 14" << endl;
+	if (cudaFree(deviceActivation) != 0) cout << "error 15" << endl;
+	if (cudaFree(deviceSynapses) != 0) cout << "error 16" << endl;
+	if (cudaFree(deviceNeurons) != 0) cout << "error 17" << endl;
+
 	return output;
 }
 
@@ -117,8 +103,8 @@ vector<double> HiddenLayer::backpropagate(vector<double> error, double learningR
 		gradientDescent<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceError, deviceLearningRate, deviceNeurons, devicePreviousLayer, deviceSynapses);
 		sumWeightedError<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceError, deviceNeurons, deviceSynapses, deviceSum);
 
-		cudaMemcpy(&synapses[0], &deviceSynapses[0],(synapses.size() * sizeof(Synapse)), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&sum[0], &deviceSum[0],(previousLayerNeurons * sizeof(double)), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&synapses[0], &deviceSynapses[0], (synapses.size() * sizeof(Synapse)), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&sum[0], &deviceSum[0], (previousLayerNeurons * sizeof(double)), cudaMemcpyDeviceToHost);
 		return sum;
 }
 

@@ -8,11 +8,10 @@
 #ifndef INPUTLAYER_H_
 #define INPUTLAYER_H_
 
-#include "Layer.h"
+#include "Layer.cuh"
 #include "PassiveNeuron.cuh"
+#include "networkKernels.cuh"
 #include <cuda.h>
-
-__global__ void activateNeuron(double *input, PassiveNeuron nodes[], double scalar, double *output);
 
 class InputLayer: public Layer {
 private:

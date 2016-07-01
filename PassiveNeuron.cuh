@@ -15,8 +15,7 @@ class PassiveNeuron: public Neuron {
 public:
 	PassiveNeuron();
 	virtual ~PassiveNeuron();
-	__device__ __host__ double get(double input, double scalar);
-	double slope(double scalar);
+	__device__ double get(double input, double scalar);
 };
 
 #endif /* PASSIVENEURON_H_ */

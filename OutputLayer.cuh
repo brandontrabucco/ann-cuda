@@ -8,14 +8,9 @@
 #ifndef OUTPUTLAYER_H_
 #define OUTPUTLAYER_H_
 
-#include "Layer.h"
+#include "Layer.cuh"
+#include "networkKernels.cuh"
 #include <cuda.h>
-
-__global__ void activateNeuron(double *input, Neuron nodes[], double *output);
-__global__ void activateSynapse(double *input, Synapse connections[], double *output);
-__global__ void sumInputFromSynapse(double *input, double *output);
-__global__ void gradientDescent(double *error, double learningRate, Neuron nodes[], Neuron previous[], Synapse connections[]);
-__global__ void sumWeightedError(double *error, Neuron nodes[], Synapse connections[], double *output);
 
 class OutputLayer: public Layer {
 public:

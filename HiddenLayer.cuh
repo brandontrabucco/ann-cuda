@@ -8,16 +8,12 @@
 #ifndef HIDDENLAYER_H_
 #define HIDDENLAYER_H_
 
-#include "Layer.h"
+#include "Layer.cuh"
+#include "networkKernels.cuh"
 #include <cuda.h>
+#include <math.h>
 
 using namespace std;
-
-__global__ void activateNeuron(double *input, Neuron nodes[], double *output);
-__global__ void activateSynapse(double *input, Synapse connections[], double *output);
-__global__ void sumInputFromSynapse(double *input, double *output);
-__global__ void gradientDescent(double *error, double learningRate, Neuron nodes[], Neuron previous[], Synapse connections[]);
-__global__ void sumWeightedError(double *error, Neuron nodes[], Synapse connections[], double *output);
 
 class HiddenLayer: public Layer {
 public:

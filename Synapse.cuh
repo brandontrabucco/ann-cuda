@@ -30,7 +30,7 @@ public:
 	int index;
 	 Synapse();
 	 ~Synapse();
-	__device__ __host__ double get(double i);
+	__device__ double get(double i);
 };
 
 #endif /* SYNAPSE_H_ */

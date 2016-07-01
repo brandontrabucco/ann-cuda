@@ -16,10 +16,9 @@ public:
 	double activation;
 	double derivative;
 	int index;
-	__device__ __host__ Neuron();
-	__device__ __host__ virtual ~Neuron();
-	__device__ __host__ virtual double get(double input);
-	__device__ __host__ virtual double slope(double input);
+	Neuron();
+	virtual ~Neuron();
+	__device__ virtual double get(double input);
 };
 
 #endif /* NEURON_H_ */
