@@ -18,7 +18,7 @@ public:
 	int index;
 	Neuron();
 	virtual ~Neuron();
-	__device__ virtual double get(double input);
+	__device__ double get(double input);
 };
 
 #endif /* NEURON_H_ */

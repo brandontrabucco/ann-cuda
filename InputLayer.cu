@@ -54,6 +54,7 @@ vector<double> InputLayer::feedforward(vector<double> input) {
 	if (cudaFree(deviceOutput) != 0) cout << "error 9" << endl;
 	if (cudaFree(deviceScalar) != 0) cout << "error 10" << endl;
 	if (cudaFree(deviceNeurons) != 0) cout << "error** 11" << endl;
+	cudaDeviceSynchronize();
 
 	return output;
 }

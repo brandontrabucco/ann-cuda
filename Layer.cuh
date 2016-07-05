@@ -20,9 +20,9 @@ public:
 	vector<Neuron> neurons;
 	vector<Synapse> synapses;
 	Layer();
-	virtual ~Layer();
-	virtual vector<double> feedforward(vector<double> input);
-	virtual vector<double> backpropagate(vector<double> error);
+	~Layer();
+	vector<double> feedforward(vector<double> input);
+	vector<double> backpropagate(vector<double> error);
 };
 
 #endif /* LAYER_H_ */

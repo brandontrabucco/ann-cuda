@@ -13,6 +13,7 @@
 #include "InputLayer.cuh"
 #include "HiddenLayer.cuh"
 #include "OutputLayer.cuh"
+#include "networkKernels.cuh"
 #include <math.h>
 #include <numeric>
 #include <cuda.h>
@@ -29,8 +30,8 @@ public:
 	virtual ~NeuralNetwork();
 	vector<double> classify(double input);
 	vector<double> classify(vector<double> input);
-	vector<double> train(double input, double actual, double rate, bool print);
-	vector<double> train(vector<double> input, vector<double> actual, double rate, bool print);
+	vector<vector<double> > train(double input, double actual, double rate, bool print);
+	vector<vector<double> > train(vector<double> input, vector<double> actual, double rate, bool print);
 };
 
 #endif /* NETWORK_H_ */

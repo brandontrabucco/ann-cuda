@@ -13,6 +13,14 @@ OutputLayer::OutputLayer(int w, int d, bool db) {
 	currentLayerNeurons = w;
 	previousLayerNeurons = d;
 
+	vector<int> temp = factor(currentLayerNeurons);
+	kernelGridHeight = temp[0];
+	kernelGridWidth = temp[1];
+
+	temp = factor(previousLayerNeurons);
+	kernelBlockHeight = temp[0];
+	kernelBlockWidth = temp[1];
+
 	// add neurons to this layer
 	for (int i = 0; i < w; i++) {
 		Neuron n = Neuron();
@@ -32,7 +40,7 @@ OutputLayer::~OutputLayer() {
 }
 
 vector<double> OutputLayer::feedforward(vector<double> input) {
-	vector<double> sum(currentLayerNeurons), output(currentLayerNeurons);	// variables to store data for math operations
+	vector<double> output(currentLayerNeurons);	// variables to store data for math operations
 
 	double *deviceInput, *deviceOutput, *deviceSum, *deviceActivation;
 	Synapse *deviceSynapses;
@@ -46,17 +54,32 @@ vector<double> OutputLayer::feedforward(vector<double> input) {
 	if (cudaMalloc((void **)&deviceSynapses, (synapses.size() * sizeof(Synapse))) != 0) cout << "error 5" << endl;
 	if (cudaMalloc((void **)&deviceNeurons, (neurons.size() * sizeof(Neuron))) != 0) cout << "error 6" << endl;
 
-	if (cudaMemcpy(deviceInput, &input[0], (input.size() * sizeof(double)), cudaMemcpyHostToDevice) != 0) cout << "error 7" << endl;
-	if (cudaMemcpy(deviceSynapses, &synapses[0], (synapses.size() * sizeof(Synapse)), cudaMemcpyHostToDevice) != 0) cout << "error 8" << endl;
-	if (cudaMemcpy(deviceNeurons, &neurons[0], (neurons.size() * sizeof(Neuron)), cudaMemcpyHostToDevice) != 0) cout << "error 9" << endl;
-	if (cudaMemset(deviceSum, 0, (neurons.size() * sizeof(double))) != 0) cout << "error 10" << endl;
+	if (cudaMemcpy(&deviceInput[0], &input[0], (input.size() * sizeof(double)), cudaMemcpyHostToDevice) != 0) cout << "error 7" << endl;
+	if (cudaMemcpy(&deviceSynapses[0], &synapses[0], (synapses.size() * sizeof(Synapse)), cudaMemcpyHostToDevice) != 0) cout << "error 8" << endl;
+	if (cudaMemcpy(&deviceNeurons[0], &neurons[0], (neurons.size() * sizeof(Neuron)), cudaMemcpyHostToDevice) != 0) cout << "error 9" << endl;
+	if (cudaMemset(&deviceSum[0], 0, (neurons.size() * sizeof(double))) != 0) cout << "error 10" << endl;
 
-	activateSynapse<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceInput, deviceSynapses, deviceOutput);
-	sumInputFromSynapse<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceOutput, deviceSum);
-	activateNeuron<<<dim3(1, 1), dim3(currentLayerNeurons, 1)>>>(deviceSum, deviceNeurons, deviceActivation);
+	cudaDeviceSynchronize();
+	activateSynapse<<<dim3(kernelGridWidth, kernelGridHeight), dim3(kernelBlockWidth, kernelBlockHeight)>>>(deviceInput, deviceSynapses, deviceOutput);	// a block represents current layer, thread is previous layer
+	cudaDeviceSynchronize();
+	sumInputFromSynapse<<<dim3(1, 1), dim3(kernelGridWidth, kernelGridHeight)>>>(deviceOutput, deviceSum, previousLayerNeurons);
+	cudaDeviceSynchronize();
+	activateNeuron<<<dim3(1, 1), dim3(kernelGridWidth, kernelGridHeight)>>>(deviceSum, deviceNeurons, deviceActivation);
+	cudaDeviceSynchronize();
 
 	// get the output from the device
-	if (cudaMemcpy(&output[0], &deviceActivation[0],(neurons.size() * sizeof(double)), cudaMemcpyDeviceToHost) != 0) cout << "error 11" << endl;
+	if (cudaMemcpy(&output[0], &deviceActivation[0],(neurons.size() * sizeof(double)), cudaMemcpyDeviceToHost) != 0) cout << "error __ 11" << endl;
+	cudaDeviceSynchronize();
+
+	// release memory from GPU
+	if (cudaFree(deviceInput) != 0) cout << "error 12" << endl;
+	if (cudaFree(deviceOutput) != 0) cout << "error 13" << endl;
+	if (cudaFree(deviceSum) != 0) cout << "error 14" << endl;
+	if (cudaFree(deviceActivation) != 0) cout << "error 15" << endl;
+	if (cudaFree(deviceSynapses) != 0) cout << "error 16" << endl;
+	if (cudaFree(deviceNeurons) != 0) cout << "error 17" << endl;
+	cudaDeviceSynchronize();
+
 	return output;
 }
 
@@ -74,6 +97,7 @@ vector<double> OutputLayer::backpropagate(vector<double> error, double learningR
 	cudaMalloc((void **)&deviceSynapses, (synapses.size() * sizeof(Synapse)));
 	cudaMalloc((void **)&deviceNeurons, (neurons.size() * sizeof(Neuron)));
 	cudaMalloc((void **)&devicePreviousLayer, (previousLayer.size() * sizeof(Neuron)));
+	cudaDeviceSynchronize();
 
 	cudaMemcpy(deviceError, &error[0], (error.size() * sizeof(double)), cudaMemcpyHostToDevice);
 	cudaMemcpy(&deviceLearningRate, &learningRate, (error.size() * sizeof(double)), cudaMemcpyHostToDevice);
@@ -81,10 +105,13 @@ vector<double> OutputLayer::backpropagate(vector<double> error, double learningR
 	cudaMemcpy(deviceNeurons, &neurons[0], (neurons.size() * sizeof(Neuron)), cudaMemcpyHostToDevice);
 	cudaMemcpy(devicePreviousLayer, &previousLayer[0], (previousLayer.size() * sizeof(Neuron)), cudaMemcpyHostToDevice);
 	cudaMemset(deviceSum, 0, (previousLayerNeurons * sizeof(double)));
+	cudaDeviceSynchronize();
 
-	gradientDescent<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceError, deviceLearningRate, deviceNeurons, devicePreviousLayer, deviceSynapses);
-	sumWeightedError<<<dim3(1, 1), dim3(currentLayerNeurons, previousLayerNeurons)>>>(deviceError, deviceNeurons, deviceSynapses, deviceSum);
+	gradientDescent<<<dim3(kernelGridWidth, kernelGridHeight), dim3(kernelBlockWidth, kernelBlockHeight)>>>(deviceError, deviceLearningRate, deviceNeurons, devicePreviousLayer, deviceSynapses);
+	cudaDeviceSynchronize();
+	sumWeightedError<<<dim3(1, 1), dim3(kernelGridWidth, kernelGridHeight)>>>(deviceError, deviceNeurons, deviceSynapses, deviceSum, previousLayerNeurons);
 
+	cudaDeviceSynchronize();
 	cudaMemcpy(&synapses[0], &deviceSynapses[0],(synapses.size() * sizeof(Synapse)), cudaMemcpyDeviceToHost);
 	cudaMemcpy(&sum[0], &deviceSum[0],(previousLayerNeurons * sizeof(double)), cudaMemcpyDeviceToHost);
 	return sum;

@@ -53,7 +53,7 @@ vector<double> NeuralNetwork::feedforward(vector<double> input) {
 	return temp;
 }
 
-vector<double> NeuralNetwork::train(double input, double actual, double rate, bool print) {
+vector<vector<double> > NeuralNetwork::train(double input, double actual, double rate, bool print) {
 	vector<double> temp, output, error;
 	for (unsigned int i = 0; i < layers[0]->neurons.size(); i++) temp.push_back(input);
 	output = feedforward(temp);
@@ -64,15 +64,19 @@ vector<double> NeuralNetwork::train(double input, double actual, double rate, bo
 		error.push_back((output[i] - actual));
 	}
 	backpropagate(error);
-	return error;
+
+	vector<vector<double> > value;
+	value.push_back(output);
+	value.push_back(error);
+
+	return value;
 }
 
-vector<double> NeuralNetwork::train(vector<double> input, vector<double> actual, double rate, bool print) {
-
+vector<vector<double> > NeuralNetwork::train(vector<double> input, vector<double> actual, double rate, bool print) {
 	if (input.size() != layers[0]->neurons.size() ||
 			actual.size() != layers[layers.size() - 1]->neurons.size()) {
 		cout << "Illegal Argument at Network::train(vector<double> input, vector<double> actual)" << endl;
-		return vector<double>();
+		return vector<vector<double> >();
 	} else {
 		vector<double> output, error;
 		output = feedforward(input);
@@ -86,7 +90,12 @@ vector<double> NeuralNetwork::train(vector<double> input, vector<double> actual,
 		if (print) cout << endl;
 
 		backpropagate(error);
-		return error;
+
+		vector<vector<double> > value;
+		value.push_back(output);
+		value.push_back(error);
+
+		return value;
 	}
 }
 

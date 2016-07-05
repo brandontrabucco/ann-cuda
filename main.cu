@@ -3,7 +3,7 @@
 // Author      : Brandon Trabucco
 // Version     : 1.0.4
 // Copyright   : This project is licensed under the GNU General Public License
-// Description : This project is a test implementation of a Neural Network
+// Description : This project is a test implementation of a Neural Network accelerated with CUDA 7.5
 //============================================================================
 
 #include "NeuralNetwork.cuh"
@@ -81,8 +81,6 @@ int main(int argc, char *argv[]) {
 	ofstream accuracyData(accuracyDataFileName.str());
 	if (!accuracyData.is_open()) return -1;
 
-	accuracyData << numberTrainIterations << "," << learningRate << "," << decay;
-
 	// load the images and get their sizes
 	startTime = getMSec();
 	images = ImageLoader::readMnistImages("/u/trabucco/Desktop/MNIST_Bytes/train-images.idx3-ubyte", numberImages, imageSize);
@@ -90,31 +88,36 @@ int main(int argc, char *argv[]) {
 	endTime = getMSec();
 	cout << "Training images and labels loaded in " << (endTime - startTime) << " msecs" << endl;
 
-	size.push_back(imageSize);	// layer 0
-	size.push_back(imageSize / 2);	// layer 1
-	size.push_back(imageSize / 4);	// layer 2
-	size.push_back(imageSize / 8);	// layer 3
-	size.push_back(imageSize / 16);	// layer 4
-	size.push_back(imageSize / 32);	// layer 5
-	size.push_back(10);	// layer 6
+	size.push_back(imageSize);			// layer 0
+	size.push_back(imageSize / 2);		// layer 1
+	size.push_back(imageSize / 4);		// layer 2
+	size.push_back(imageSize / 8);		// layer 3
+	size.push_back(imageSize / 16);		// layer 4
+	size.push_back(imageSize / 32);		// layer 5
+	size.push_back(10);					// layer 6
 
 	// the base class for our neural network
 	NeuralNetwork network = NeuralNetwork(size, 1.0, learningRate, false);
 
 	// iterate the network through each image and pixel
-	for (int i = 0; i < 1; i++) {
+	int c = 0;
+	for (int i = 0; i < 2; i++) {
 		startTime = getMSec();
-		vector<double> error = network.train(images[i], OutputTarget::getTargetOutput(labels[i]), learningRate, !(i % (numberTrainIterations / 100)));
-		errorData << i << "," << (accumulate( error.begin(), error.end(), 0.0)/error.size())  << endl;
+		vector<vector<double> > trainingData = network.train(images[i], OutputTarget::getTargetOutput(labels[i]), learningRate, !(i % (numberTrainIterations / 100)));
+		errorData << i << "," << (accumulate( trainingData[1].begin(), trainingData[1].end(), 0.0)/trainingData[1].size())  << endl;
 		endTime = getMSec();
 		if (!(i % (numberTrainIterations / updatePoints))) {
 			errorData << i;
-			errorData << "," << ((double)accumulate(error.begin(), error.end(), 0.0)) / ((double)error.size());
+			errorData << "," << ((double)accumulate(trainingData[1].begin(), trainingData[1].end(), 0.0)) / ((double)trainingData[1].size());
 			errorData << endl;
 			timingData << i << "," << (endTime - startTime) << endl;
 			cout << "Iteration " << i << " " << (endTime - startTime) << "msecs, ETA " << (((double)(endTime - startTime)) * (numberTrainIterations - (double)i) / 1000.0 / 60.0) << "min" << endl;
 			learningRate *= decay;
+			if (OutputTarget::getTargetFromOutput(trainingData[0]) == labels[i]) {
+				c += 1;
+			}
 		}
+		accuracyData << i << "," << (100 * c / updatePoints) << endl;
 	}
 
 	// load test images
@@ -122,8 +125,8 @@ int main(int argc, char *argv[]) {
 	labels = ImageLoader::readMnistLabels("/u/trabucco/Desktop/MNIST_Bytes/t10k-labels.idx1-ubyte", numberLabels);
 
 	// iterate through each test image
-	int c = 0;
-	for (int i = 0; i < 1; i++) {
+	/*c = 0;
+	for (int i = 0; i < 100; i++) {
 		startTime = getMSec();
 		vector<double> temp = network.classify(images[i]);
 		endTime = getMSec();
@@ -140,8 +143,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	// report on how accurate the network was when testing
-	accuracyData << "," << learningRate << "," << (((double)c) / ((double)numberTestIterations)) << endl;
+	cout << endl << "Percentage correct " << (c) << "%" << endl;*/
 
 	cout << "Program finished" << endl;
 
