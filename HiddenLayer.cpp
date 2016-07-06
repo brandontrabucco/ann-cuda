@@ -10,8 +10,8 @@
 HiddenLayer::HiddenLayer(int w, int d, bool db) {
 	// TODO Auto-generated constructor stub
 	debug = db;
-	width = w;
-	depth = d;
+	currentLayerNeurons = w;
+	previousLayerNeurons = d;
 
 	// add neurons and synapses to this layer
 	for (int i = 0; i < w; i++) {
@@ -33,44 +33,34 @@ HiddenLayer::~HiddenLayer() {
 
 vector<double> HiddenLayer::feedforward(vector<double> input) {
 	vector<double> temp, sum, output;	// variables to store data for math operations
-	for (int i = 0; i < width; i++) {	// iterate through each synapse for input
-		sum.push_back(0);
-		for (unsigned int j = 0; j < (input.size() / width); j++) {
-			sum[i] += input[(i * (input.size() / width)) + j];
-			if (debug) cout << "Neuron " << i << " summing index " << (i * (input.size() / width)) + j << endl;
-		}
-	} for (int i = 0; i < width; i++) {
-		// data is scaled, aligned, and summed
-		// compute current layer neural activation
-		temp.push_back(neurons[i]->get(sum[i]));
-		if (debug) cout << "Neuron " << neurons[i]->index << " activating at " << i << endl;
-	} for (int i = 0; i < depth; i++) {	// iterate through each synapse
-		for (int j = 0; j < width; j++) {
-			// each current neuron has as many synapses as there are neurons in next layer
-			output.push_back(synapses[(j * depth) + i]->get(temp[j]));
-			if (debug) cout << "Synapse " << synapses[(j * depth) + i]->index << " activating at " << ((j * depth) + i) << " index " << ((i * width) + j) << endl;
-		}
-	} return output;
+		for (int i = 0; i < currentLayerNeurons; i++) {	// iterate through each synapse
+			for (int j = 0; j < previousLayerNeurons; j++) {
+				// calculate a synapse input for each connection
+				temp.push_back(synapses[(i * previousLayerNeurons) + j]->get(input[j]));
+				//if (j == 0) cout << synapses[(i * previousLayerNeurons) + j]->weight << endl;
+			}
+		} for (int i = 0; i < currentLayerNeurons; i++) {	// iterate through each synapse for input
+			sum.push_back(0);
+			for (int j = 0; j < previousLayerNeurons; j++) {
+				sum[i] += temp[(i * previousLayerNeurons) + j];
+			} //sum[i] /= (temp.size());
+			output.push_back(neurons[i]->get(sum[i]));
+			if (debug) cout << "Neuron " << neurons[i]->index << " activating by " << output[i] << endl;
+		} return output;
 }
 
-vector<double> HiddenLayer::backpropagate(vector<double> errorPrime, double learningRate) {
-	vector<double> sum;
-	// iterate through each synapse connected to the next layer
-	for (int i = 0; i < depth; i++) {
-		double weightSum = 0;
-		for (int j = 0; j < width; j++) weightSum += synapses[(j * depth) + i]->weight;
-		for (int j = 0; j < width; j++) {
+vector<double> HiddenLayer::backpropagate(vector<double> error, double learningRate, vector<Neuron *> previousLayer) {
+	// iterate through each synapse connected to the previous layer
+	vector<double> eta, sum;
+	for (int i = 0; i < currentLayerNeurons; i++) {
+		eta.push_back(error[i] * neurons[i]->derivative);
+		for (int j = 0; j < previousLayerNeurons; j++) {
 			if (i == 0) sum.push_back(0);
 			// update the weight and bias variables (need to take the weighted error in proportion to the sum of weights to a neuron)
-			synapses[(j * depth) + i]->weightedErrorPrime = errorPrime[i] * synapses[(j * depth) + i]->weight / weightSum;
-			synapses[(j * depth) + i]->weight -= learningRate * neurons[j]->activation * synapses[(j * depth) + i]->weightedErrorPrime;
-			synapses[(j * depth) + i]->bias -= learningRate * synapses[(j * depth) + i]->weightedErrorPrime;
-
-			if (debug) cout << "Synapse " << synapses[(j * depth) + i]->index << " updating at " << ((j * depth) + i) << endl;
-
-			// sum up the total weighted error for each neuron (potentially take the average)
-			sum[j] += synapses[(j * depth) + i]->weightedErrorPrime;
-			//if (i == (width - 1)) sum[j] /= depth;
+			synapses[(i * previousLayerNeurons) + j]->weight -= learningRate * eta[i] * previousLayer[j]->activation;
+			//synapses[(i * previousLayerNeurons) + j]->bias -= learningRate * eta[i];
+			sum[j] += ((eta[i] * synapses[(i * previousLayerNeurons) + j]->weight) + synapses[(i * previousLayerNeurons) + j]->bias);
+			//sum[j] /= previousLayerNeurons;
 		}
 	} return sum;
 }

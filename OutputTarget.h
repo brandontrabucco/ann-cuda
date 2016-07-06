@@ -1,0 +1,27 @@
+/*
+ * OutputTarget.h
+ *
+ *  Created on: Jun 23, 2016
+ *      Author: trabucco
+ */
+
+#ifndef OUTPUTTARGET_H_
+#define OUTPUTTARGET_H_
+
+#include <vector>
+#include <cmath>
+#include <iostream>
+
+using namespace std;
+
+class OutputTarget {
+private:
+	static const int nodes = 10;
+	static const int classes = 10;
+	static const double classifiers[classes][nodes];
+public:
+	static vector<double> getTargetOutput(int c);
+	static int getTargetFromOutput(vector<double> output);
+};
+
+#endif /* OUTPUTTARGET_H_ */

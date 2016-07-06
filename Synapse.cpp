@@ -7,10 +7,15 @@
 
 #include "Synapse.h"
 
+normal_distribution<double> Synapse::d(0, 1);
+
+default_random_engine Synapse::g(5);
+
 Synapse::Synapse() {
 	// TODO Auto-generated constructor stub
-	weight = (double)rand() / (double)RAND_MAX;
-	bias =(double)rand() / (double)RAND_MAX;
+	weight = d(g);
+	bias = 0;
+	weightedError = 0;
 }
 
 Synapse::~Synapse() {

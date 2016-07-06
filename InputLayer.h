@@ -14,10 +14,9 @@
 class InputLayer: public Layer {
 public:
 	bool debug;
-	int width;
-	int depth;
+	int currentLayerNeurons;
 	double scalar;
-	InputLayer(int w, int d, double range, bool db);
+	InputLayer(int w, double range, bool db);
 	virtual ~InputLayer();
 	vector<double> feedforward(vector<double> input);
 	vector<double> backpropagate(vector<double> errorPrime, double learningRate);

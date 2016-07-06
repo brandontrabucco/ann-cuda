@@ -16,12 +16,12 @@ using namespace std;
 class HiddenLayer: public Layer {
 public:
 	bool debug;
-	int width;
-	int depth;
+	int currentLayerNeurons;
+	int previousLayerNeurons;
 	HiddenLayer(int w, int d, bool db);
 	virtual ~HiddenLayer();
 	vector<double> feedforward(vector<double> input);
-	vector<double> backpropagate(vector<double> errorPrime, double learningRate);
+	vector<double> backpropagate(vector<double> error, double learningRate, vector<Neuron *> previousLayer);
 };
 
 #endif /* HIDDENLAYER_H_ */
