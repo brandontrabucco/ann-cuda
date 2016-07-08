@@ -50,6 +50,7 @@ vector<double> NeuralNetwork::feedforward(vector<double> input) {
 		// show the output of the last layer
 		//cout << "Output Neuron " << i << " : " << temp[i] << endl;
 	}
+	//cout << "Overhead / Computation ratio " << ((double)(HiddenLayer::overhead + OutputLayer::overhead)) / ((double)(HiddenLayer::computation + OutputLayer::computation)) << endl;
 	return temp;
 }
 
@@ -76,7 +77,7 @@ vector<vector<double> > NeuralNetwork::train(double input, double actual, double
 vector<vector<double> > NeuralNetwork::train(vector<double> input, vector<double> actual, double rate, bool print) {
 	if (input.size() != layers[0]->neurons.size() ||
 			actual.size() != layers[layers.size() - 1]->neurons.size()) {
-		cout << "Illegal Argument at Network::train(vector<double> input, vector<double> actual)" << endl;
+		cout << "Illegal Argument at Network::train(vector<double> input, vector<double> actual) " << input.size() << " " << actual.size() << endl;
 		return vector<vector<double> >();
 	} else {
 		vector<double> output, error;
@@ -108,5 +109,34 @@ vector<double> NeuralNetwork::backpropagate(vector<double> error) {
 		else if (i > 0 && (i < (int)(layers.size() - 1))) temp = ((HiddenLayer *)layers[i])->backpropagate(temp, learningRate, layers[i - 1]->neurons);
 		if (debug) cout << "Backpropagation on layer " << i << " finished" << endl;
 	} return temp;
+}
+
+struct tm *currentDate() {
+	time_t t = time(NULL);
+	struct tm *timeObject = localtime(&t);
+	return timeObject;
+}
+
+void NeuralNetwork::toFile(int iteration, int numberTrainIterations, double decay) {
+	ostringstream fileName;
+	fileName << "/u/trabucco/Desktop/ANN_Saves/" <<
+			(currentDate()->tm_year + 1900) << "-" << (currentDate()->tm_mon + 1) << "-" << currentDate()->tm_mday <<
+			"_GPU-ANN-Save-Iteration-" << iteration << "_" <<
+			numberTrainIterations <<
+			"-" << learningRate <<
+			"-" << decay << ".ann";
+	ofstream _file(fileName.str());
+
+	for (int i = 1; i < layers.size(); i++) {
+		if (i == (layers.size() - 1)) for (int j = 0; j < ((OutputLayer *)layers[i])->synapses.size(); j++) {
+			if (j == (((OutputLayer *)layers[i])->synapses.size() - 1))_file << ((OutputLayer *)layers[i])->synapses[j].weight << endl;
+			else _file << ((OutputLayer *)layers[i])->synapses[j].weight << ",";
+		} else for (int j = 0; j < ((HiddenLayer *)layers[i])->synapses.size(); j++) {
+			if (j == (((HiddenLayer *)layers[i])->synapses.size() - 1))_file << ((HiddenLayer *)layers[i])->synapses[j].weight << endl;
+			else _file << ((HiddenLayer *)layers[i])->synapses[j].weight << ",";
+		}
+	}
+
+	_file.close();
 }
 

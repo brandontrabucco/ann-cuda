@@ -11,9 +11,11 @@
 #include "Layer.cuh"
 #include "networkKernels.cuh"
 #include <cuda.h>
+#include <sys/time.h>
 
 class OutputLayer: public Layer {
 public:
+	static int overhead, computation;
 	bool debug;
 	int currentLayerNeurons;
 	int previousLayerNeurons;

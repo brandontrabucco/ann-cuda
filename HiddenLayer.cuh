@@ -12,11 +12,13 @@
 #include "networkKernels.cuh"
 #include <cuda.h>
 #include <math.h>
+#include <sys/time.h>
 
 using namespace std;
 
 class HiddenLayer: public Layer {
 public:
+	static int overhead, computation;
 	bool debug;
 	int currentLayerNeurons;
 	int previousLayerNeurons;

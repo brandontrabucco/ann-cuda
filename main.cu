@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 	int numberTestIterations = 100;
 	int updatePoints = 100;
 	double learningRate = atof(argv[2]), decay = atof(argv[3]);
-	long long startTime, endTime;
+	long long startTime, endTime, minTime;
 
 	// open file streams with unique names
 	ostringstream errorDataFileName;
@@ -88,13 +88,14 @@ int main(int argc, char *argv[]) {
 	endTime = getMSec();
 	cout << "Training images and labels loaded in " << (endTime - startTime) << " msecs" << endl;
 
-	size.push_back(imageSize);			// layer 0
-	//size.push_back(imageSize / 2);		// layer 1
-	size.push_back(imageSize / 4);		// layer 2
-	//size.push_back(imageSize / 8);		// layer 3
-	size.push_back(imageSize / 16);		// layer 4
-	//size.push_back(imageSize / 32);		// layer 5
-	size.push_back(10);					// layer 6
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(10);					// layer 3
 
 	// the base class for our neural network
 	NeuralNetwork network = NeuralNetwork(size, 1.0, learningRate, false);
@@ -105,7 +106,9 @@ int main(int argc, char *argv[]) {
 		startTime = getMSec();
 		vector<vector<double> > trainingData = network.train(images[i], OutputTarget::getTargetOutput(labels[i]), learningRate, !(i % (numberTrainIterations / updatePoints)));
 		endTime = getMSec();
-		if (!(i % (numberTrainIterations / updatePoints))) {
+		if (OutputTarget::getTargetFromOutput(trainingData[0]) == labels[i]) {
+			c += 1;
+		} if (!(i % (numberTrainIterations / updatePoints))) {
 			double errorSum = 0;
 
 			for (int j = 0; j < trainingData[1].size(); j++) {
@@ -117,17 +120,18 @@ int main(int argc, char *argv[]) {
 			errorData << endl;
 			timingData << i << ", " << (endTime - startTime) << endl;
 			cout << "Iteration " << i << " " << (endTime - startTime) << "msecs, ETA " << (((double)(endTime - startTime)) * (numberTrainIterations - (double)i) / 1000.0 / 60.0) << "min" << endl;
+			if (minTime > (endTime - startTime)) minTime = (endTime - startTime);
 			learningRate *= decay;
-			if (OutputTarget::getTargetFromOutput(trainingData[0]) == labels[i]) {
-				c += 1;
-			} accuracyData << i << ", " << (100 * c / updatePoints) << endl;
+			accuracyData << i << ", " << (100 * c / (i + 1)) << endl;
+
+			network.toFile(i, numberTrainIterations, decay);
 		}
 	}
 
 	// load test images
-	/*images = ImageLoader::readMnistImages("/u/trabucco/Desktop/MNIST_Bytes/t10k-images.idx3-ubyte", numberImages, imageSize);
+	images = ImageLoader::readMnistImages("/u/trabucco/Desktop/MNIST_Bytes/t10k-images.idx3-ubyte", numberImages, imageSize);
 	labels = ImageLoader::readMnistLabels("/u/trabucco/Desktop/MNIST_Bytes/t10k-labels.idx1-ubyte", numberLabels);
-*/
+
 	// iterate through each test image
 	c = 0;
 	for (int i = 0; i < numberTestIterations; i++) {
@@ -139,7 +143,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	cout << endl << "Percentage correct " << (c) << "%" << endl;
+	accuracyData << numberTrainIterations << ", " << (100 * c / numberTestIterations) << endl;
+	cout << endl << "Percentage correct " << (100 * c / numberTestIterations) << "%" << endl;
+	cout << "Quickest execution " << minTime << "msecs" << endl;
 
 	cout << "Program finished" << endl;
 
