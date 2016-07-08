@@ -13,7 +13,8 @@ __global__ void activateInputNeuron(double *input, PassiveNeuron nodes[], double
 __global__ void activateNeuron(double *input, Neuron nodes[], double *output);
 __global__ void activateSynapse(double *input, Synapse connections[], double *output);
 __global__ void sumInputFromSynapse(double *input, double *output, int nConnections);
-__global__ void gradientDescent(double *error, double learningRate, Neuron nodes[], Neuron previous[], Synapse connections[]);
+__global__ void gradientDescentHiddenLayer(double *error, double learningRate, Neuron nodes[], Neuron previous[], Synapse connections[]);
+__global__ void gradientDescentOutputLayer(double *error, double learningRate, Neuron previous[], Synapse connections[]);
 __global__ void sumWeightedError(double *error, Neuron nodes[], Synapse connections[], double *output, int nConnections);
 __global__ void testK();
 vector<int> factor(int f);

@@ -1,7 +1,7 @@
 //============================================================================
 // Name        : main.cpp
 // Author      : Brandon Trabucco
-// Version     : 1.0.4
+// Version     : 1.0.5
 // Copyright   : This project is licensed under the GNU General Public License
 // Description : This project is a test implementation of a Neural Network accelerated with CUDA 7.5
 //============================================================================
@@ -33,120 +33,197 @@ struct tm *getDate() {
 }
 
 int main(int argc, char *argv[]) {
+	// start program and validate input
 	cout << "Program initializing" << endl;
-	if (argc != 4) {
-		cout << argv[0] << " <training iterations> <learning rate> <decay rate>" << endl;
+	if (argc != 6) {
+		cout << argv[0] << " <training size> <repeat size> <learning rate> <decay rate>" << endl;
 		return -1;
 	}
 
+
+	/**
+	 *
+	 * 	Declare the global variables
+	 * 	These govern functionality of the program
+	 *
+	 */
 	vector<int> size;
-	vector<vector<double> > images;
-	vector<double> labels;
+	vector<vector<double> > trainingImages, testImages;
+	vector<double> trainingLabels, testLabels;
 	int numberImages = 0;
 	int imageSize = 0;
 	int numberLabels = 0;
-	int numberTrainIterations = atoi(argv[1]);
-	int numberTestIterations = 100;
+	int trainingSize = atoi(argv[2]);
+	int repeatImages = atoi(argv[3]);
+	int testSize = 1000;
 	int updatePoints = 100;
-	double learningRate = atof(argv[2]), decay = atof(argv[3]);
-	long long startTime, endTime, minTime;
+	int savePoints = 10;
+	double learningRate = atof(argv[4]), decay = atof(argv[5]);
+	long long networkStart, networkEnd, sumTime = 0, iterationStart;
+	bool enableBatch = (argv[1][0] == 'b');
 
-	// open file streams with unique names
+
+	/**
+	 *
+	 * 	Open file streams to save data samples from Neural Network
+	 * 	This data can be plotted via GNUPlot
+	 *
+	 */
 	ostringstream errorDataFileName;
 	errorDataFileName << "/u/trabucco/Desktop/MNIST_Data_Files/" <<
 			(getDate()->tm_year + 1900) << "-" << (getDate()->tm_mon + 1) << "-" << getDate()->tm_mday <<
-			"_cuda-error-data_" <<
-			numberTrainIterations <<
-			"-" << learningRate <<
-			"-" << decay << ".csv";
+			"_GPU-ANN-"  << (enableBatch ? "Batch" : "Incremental") << "-Error_" <<
+			(trainingSize * repeatImages) <<
+			"-iterations_" << repeatImages <<
+			"-repeat_" << learningRate <<
+			"-learning_" << decay << "-decay.csv";
 	ostringstream timingDataFileName;
-	timingDataFileName << "/u/trabucco/Desktop/MNIST_Data_Files/" <<
-			(getDate()->tm_year + 1900) << "-" << (getDate()->tm_mon + 1) << "-" << getDate()->tm_mday <<
-			"_cuda-timing-data_" <<
-			numberTrainIterations <<
-			"-" << learningRate <<
-			"-" << decay << ".csv";;
+	timingDataFileName << "/u/trabucco/Desktop/MNIST_Data_Files/GPU-" << (enableBatch ? "Batch" : "Incremental") << "-Timing.csv";
 	ostringstream accuracyDataFileName;
 	accuracyDataFileName << "/u/trabucco/Desktop/MNIST_Data_Files/" <<
 			(getDate()->tm_year + 1900) << "-" << (getDate()->tm_mon + 1) << "-" << getDate()->tm_mday <<
-			"_cuda-accuracy-data_" <<
-			numberTrainIterations <<
-			"-" << learningRate <<
-			"-" << decay << ".csv";
+			"_GPU-ANN-" << (enableBatch ? "Batch" : "Incremental") << "-Accuracy_" <<
+			(trainingSize * repeatImages) <<
+			"-iterations_" << repeatImages <<
+			"-repeat_" << learningRate <<
+			"-learning_" << decay << "-decay.csv";
 
 	ofstream errorData(errorDataFileName.str());
 	if (!errorData.is_open()) return -1;
-	ofstream timingData(timingDataFileName.str());
+	ofstream timingData(timingDataFileName.str(), ios::app);
 	if (!timingData.is_open()) return -1;
 	ofstream accuracyData(accuracyDataFileName.str());
 	if (!accuracyData.is_open()) return -1;
 
-	// load the images and get their sizes
-	startTime = getMSec();
-	images = ImageLoader::readMnistImages("/u/trabucco/Desktop/MNIST_Bytes/train-images.idx3-ubyte", numberImages, imageSize);
-	labels = ImageLoader::readMnistLabels("/u/trabucco/Desktop/MNIST_Bytes/train-labels.idx1-ubyte", numberLabels);
-	endTime = getMSec();
-	cout << "Training images and labels loaded in " << (endTime - startTime) << " msecs" << endl;
 
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(10);					// layer 3
+	/**
+	 *
+	 * 	Load the MNIST Dataset
+	 * 	To feed into Neural Network
+	 *
+	 */
+	// load training images and labels
+	networkStart = getMSec();
+	trainingImages = ImageLoader::readMnistImages("/u/trabucco/Desktop/MNIST_Bytes/train-images.idx3-ubyte", numberImages, imageSize);
+	trainingLabels = ImageLoader::readMnistLabels("/u/trabucco/Desktop/MNIST_Bytes/train-labels.idx1-ubyte", numberLabels);
+	// load test images and labels
+	testImages = ImageLoader::readMnistImages("/u/trabucco/Desktop/MNIST_Bytes/t10k-images.idx3-ubyte", numberImages, imageSize);
+	testLabels = ImageLoader::readMnistLabels("/u/trabucco/Desktop/MNIST_Bytes/t10k-labels.idx1-ubyte", numberLabels);
+	networkEnd = getMSec();
+	cout << "Training images and labels loaded in " << (networkEnd - networkStart) << " msecs" << endl;
 
-	// the base class for our neural network
+
+	/**
+	 *
+	 * 	Set the size of the Neural Network
+	 * 	Each element is one layer
+	 *
+	 */
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(imageSize);
+	size.push_back(10);
+
+
+	/**
+	 *
+	 * 	Initialize the Neural Network
+	 * 	Parameters are set
+	 *
+	 */
 	NeuralNetwork network = NeuralNetwork(size, 1.0, learningRate, false);
 
-	// iterate the network through each image and pixel
-	int c = 0;
-	for (int i = 0; i < numberTrainIterations; i++) {
-		startTime = getMSec();
-		vector<vector<double> > trainingData = network.train(images[i], OutputTarget::getTargetOutput(labels[i]), learningRate, !(i % (numberTrainIterations / updatePoints)));
-		endTime = getMSec();
-		if (OutputTarget::getTargetFromOutput(trainingData[0]) == labels[i]) {
-			c += 1;
-		} if (!(i % (numberTrainIterations / updatePoints))) {
-			double errorSum = 0;
 
-			for (int j = 0; j < trainingData[1].size(); j++) {
-				errorSum += trainingData[1][j] * trainingData[1][j] / 2;
+	/**
+	 *
+	 * 	Iterate through the training and test datasets
+	 * 	Output performance information to data files
+	 *
+	 */
+	if (!enableBatch) {
+		/**
+		*
+		* 	This section is for incremental gradient descent
+		*
+		*/
+		for (int r = 0; r < repeatImages; r++) {
+			for (int i = 0; i < trainingSize; i++) {
+				int absoluteIteration = (r * trainingSize) + i;
+				iterationStart = getMSec();
+
+				networkStart = getMSec();
+				vector<vector<double> > trainingData = network.increment(trainingImages[i], OutputTarget::getTargetOutput(trainingLabels[i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
+				networkEnd = getMSec();
+				sumTime += (networkEnd - networkStart);
+				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints))) {
+					errorData << absoluteIteration;
+					errorData << ", " << trainingData[1][0];
+					errorData << endl;
+					learningRate *= decay;
+
+					// iterate through each test image to get current accuracy
+					int c = 0;
+					for (int j = 0; j < testSize; j++) {
+						networkStart = getMSec();
+						vector<double> temp = network.classify(testImages[j]);
+						networkEnd = getMSec();
+						if (OutputTarget::getTargetFromOutput(temp) == testLabels[j]) {
+							c += 1;
+						}
+					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
+					cout << "Iteration " << absoluteIteration << " " << (getMSec() - iterationStart) << "msecs, ETA " << (((double)(getMSec() - iterationStart)) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
+				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints))) {
+					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
+				}
 			}
+		}
+	} else {
+		/**
+		 *
+		 * 	This section is for batch gradient descent
+		 *
+		 */
+		for (int r = 0; r < repeatImages; r++) {
+			for (int i = 0; i < trainingSize; i++) {
+				int absoluteIteration = (r * trainingSize) + i;
+				iterationStart = getMSec();
 
-			errorData << i;
-			errorData << ", " << errorSum;
-			errorData << endl;
-			timingData << i << ", " << (endTime - startTime) << endl;
-			cout << "Iteration " << i << " " << (endTime - startTime) << "msecs, ETA " << (((double)(endTime - startTime)) * (numberTrainIterations - (double)i) / 1000.0 / 60.0) << "min" << endl;
-			if (minTime > (endTime - startTime)) minTime = (endTime - startTime);
-			learningRate *= decay;
-			accuracyData << i << ", " << (100 * c / (i + 1)) << endl;
+				networkStart = getMSec();
+				vector<vector<double> > trainingData = network.batch(trainingImages[i], OutputTarget::getTargetOutput(trainingLabels[i]), learningRate, !(absoluteIteration % (trainingSize / updatePoints)), !(absoluteIteration % (trainingSize / updatePoints)));
+				networkEnd = getMSec();
+				sumTime += (networkEnd - networkStart);
+				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints))) {
+					errorData << absoluteIteration;
+					errorData << ", " << trainingData[1][0];
+					errorData << endl;
+					learningRate *= decay;
 
-			network.toFile(i, numberTrainIterations, decay);
+					// iterate through each test image to get current accuracy
+					int c = 0;
+					for (int j = 0; j < testSize; j++) {
+						networkStart = getMSec();
+						vector<double> temp = network.classify(testImages[j]);
+						networkEnd = getMSec();
+						if (OutputTarget::getTargetFromOutput(temp) == testLabels[j]) {
+							c += 1;
+						}
+					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
+					cout << "Iteration " << absoluteIteration << " " << (getMSec() - iterationStart) << "msecs, ETA " << (((double)(getMSec() - iterationStart)) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
+				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints))) {
+					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
+				}
+			}
 		}
 	}
 
-	// load test images
-	images = ImageLoader::readMnistImages("/u/trabucco/Desktop/MNIST_Bytes/t10k-images.idx3-ubyte", numberImages, imageSize);
-	labels = ImageLoader::readMnistLabels("/u/trabucco/Desktop/MNIST_Bytes/t10k-labels.idx1-ubyte", numberLabels);
 
-	// iterate through each test image
-	c = 0;
-	for (int i = 0; i < numberTestIterations; i++) {
-		startTime = getMSec();
-		vector<double> temp = network.classify(images[i]);
-		endTime = getMSec();
-		if (OutputTarget::getTargetFromOutput(temp) == labels[i]) {
-			c += 1;
-		}
-	}
-
-	accuracyData << numberTrainIterations << ", " << (100 * c / numberTestIterations) << endl;
-	cout << endl << "Percentage correct " << (100 * c / numberTestIterations) << "%" << endl;
-	cout << "Quickest execution " << minTime << "msecs" << endl;
-
+	// end program and close file streams
+	timingData << (accumulate(size.begin(), size.end(), 0)) << ", " << sumTime << endl;
+	cout << "Total computation time " << sumTime << "msecs" << endl;
 	cout << "Program finished" << endl;
 
 	errorData.close();

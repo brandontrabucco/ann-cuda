@@ -28,7 +28,25 @@ __global__ void sumInputFromSynapse(double *input, double *output, int nConnecti
 	//if (neuronId == 0)printf("Sum = %f\n", output[neuronId]);
 }
 
-__global__ void gradientDescent(double *error, double learningRate, Neuron nodes[], Neuron previous[], Synapse connections[]) {
+__global__ void gradientDescentHiddenLayer(double *errorPrime, double learningRate, Neuron nodes[], Neuron previous[], Synapse connections[]) {
+	int blockId = (blockIdx.y * gridDim.x) + blockIdx.x;	// the current layer
+	int threadId = (threadIdx.y * blockDim.x) + threadIdx.x;	// the previous layer
+
+	//if (blockId == 6 && threadId == 0) printf("Delta %f\n", learningRate * error[blockId] * nodes[blockId].derivative * previous[threadId].activation);
+	//if (blockId == 6 && threadId == 0) printf("Learning %f\n", learningRate);
+	//if (blockId == 6 && threadId == 0) printf("Error %f\n", errorPrime[blockId]);
+	//if (blockId == 6 && threadId == 0) printf("Derivative %f\n", nodes[blockId].derivative);
+	//if (blockId == 6 && threadId == 0) printf("Activation %f\n\n", previous[threadId].activation);
+
+
+
+	connections[blockId * (blockDim.x * blockDim.y) + threadId].weight -= learningRate * errorPrime[blockId] * nodes[blockId].derivative * previous[threadId].activation;
+	//connections[blockId * (blockDim.x * blockDim.y) + threadId].bias -= learningRate * errorPrime[blockId] * nodes[blockId].derivative;
+
+	//if (blockId == 0 && threadId == 0) printf("Weight %f\n", connections[blockId * (blockDim.x * blockDim.y) + threadId].weight);
+}
+
+__global__ void gradientDescentOutputLayer(double *errorPrime, double learningRate, Neuron previous[], Synapse connections[]) {
 	int blockId = (blockIdx.y * gridDim.x) + blockIdx.x;	// the current layer
 	int threadId = (threadIdx.y * blockDim.x) + threadIdx.x;	// the previous layer
 
@@ -40,8 +58,8 @@ __global__ void gradientDescent(double *error, double learningRate, Neuron nodes
 
 
 
-	connections[blockId * (blockDim.x * blockDim.y) + threadId].weight -= learningRate * error[blockId] * nodes[blockId].derivative * previous[threadId].activation;
-	//connections[blockId * (blockDim.x * blockDim.y) + threadId].bias -= learningRate * error[blockId] * nodes[blockId].derivative;
+	connections[blockId * (blockDim.x * blockDim.y) + threadId].weight -= learningRate * errorPrime[blockId] * previous[threadId].activation;
+	//connections[blockId * (blockDim.x * blockDim.y) + threadId].bias -= learningRate * errorPrime[blockId];
 
 	//if (blockId == 0 && threadId == 0) printf("Weight %f\n", connections[blockId * (blockDim.x * blockDim.y) + threadId].weight);
 }
