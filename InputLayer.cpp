@@ -13,8 +13,8 @@ InputLayer::InputLayer(int w, double range, bool db) {
 	currentLayerNeurons = w;
 	scalar = 1 / range;
 	for (int i = 0; i < currentLayerNeurons; i++) {
-		PassiveNeuron *n = new PassiveNeuron();
-		n->index = i;
+		PassiveNeuron n = PassiveNeuron();
+		n.index = i;
 		neurons.push_back(n);
 		if (debug) cout << "Passive Neuron " << i << endl;
 	}
@@ -29,8 +29,8 @@ vector<double> InputLayer::feedforward(vector<double> input) {
 
 	// take the input and simply scale it within a range
 	for (int i = 0; i < currentLayerNeurons; i++) {
-		temp.push_back(((PassiveNeuron *)neurons[i])->get(input[i], scalar));
-		if (debug) cout << "Neuron " << neurons[i]->index << " activating by " << temp[i] << " from " << input[i] << endl;
+		temp.push_back(((PassiveNeuron&)(neurons[i])).get(input[i], scalar));
+		if (debug) cout << "Neuron " << neurons[i].index << " activating by " << temp[i] << " from " << input[i] << endl;
 	} return temp;
 }
 

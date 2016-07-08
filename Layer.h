@@ -17,8 +17,8 @@ using namespace std;
 
 class Layer {
 public:
-	vector<Neuron *> neurons;
-	vector<Synapse *> synapses;
+	vector<Neuron> neurons;
+	vector<Synapse> synapses;
 	Layer();
 	virtual ~Layer();
 	virtual vector<double> feedforward(vector<double> input);

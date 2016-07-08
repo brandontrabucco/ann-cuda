@@ -20,7 +20,7 @@ public:
 	OutputLayer(int w, int d, bool db);
 	virtual ~OutputLayer();
 	vector<double> feedforward(vector<double> input);
-	vector<double> backpropagate(vector<double> error, double learningRate, vector<Neuron *> previousLayer);
+	vector<double> backpropagate(vector<double> error, double learningRate, vector<Neuron> previousLayer);
 };
 
 #endif /* OUTPUTLAYER_H_ */
