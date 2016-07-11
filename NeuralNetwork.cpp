@@ -17,7 +17,7 @@ NeuralNetwork::NeuralNetwork(vector<int> size, double range, double rate, bool d
 	// TODO Auto-generated constructor stub
 	debug = d;
 	learningRate = rate;
-	errorPrime = vector<double>(size[size.size() - 1]);
+	errorPrime = vector<double>(size[size.size() - 1], 0);
 	for (unsigned int i = 0; i < size.size(); i++) {
 		if (i == 0) layers.push_back(new InputLayer(size[i], range, d));
 		else if (i == (size.size() - 1)) layers.push_back(new OutputLayer(size[i], size[i - 1], d));
@@ -79,15 +79,13 @@ vector<vector<double> > NeuralNetwork::increment(vector<double> input, vector<do
 		vector<double> output, error;
 		output = feedforward(input);
 		learningRate = rate;
-		double primeSum = 0, sum = 0;
+		double sum = 0;
 		for (int i = 0; i < output.size(); i++) {
-			primeSum += (output[i] - actual[i]) * layers[layers.size() - 1]->neurons[i].derivative;
+			errorPrime[i] = (output[i] - actual[i]) * layers[layers.size() - 1]->neurons[i].derivative;
 			sum += (output[i] - actual[i]) * (output[i] - actual[i]);
-		} primeSum /= output.size(); sum /= (output.size() * 2);
-		for (int i = 0; i < output.size(); i++) {
-			errorPrime[i] = (primeSum);
-			error.push_back(sum);
-		} if (print)cout << "error = " << sum << endl;
+		} sum /= (output.size() * 2);
+		error.push_back(sum);
+		if (print)cout << "error = " << sum << endl;
 
 		vector<vector<double> > value;
 		value.push_back(output);
@@ -115,15 +113,13 @@ vector<vector<double> > NeuralNetwork::batch(vector<double> input, vector<double
 		output = feedforward(input);
 
 		if (update) {
-			double primeSum = 0, sum = 0;
+			double sum = 0;
 			for (int i = 0; i < output.size(); i++) {
-				primeSum += (output[i] - actual[i]) * layers[layers.size() - 1]->neurons[i].derivative;
+				errorPrime[i] += (output[i] - actual[i]) * layers[layers.size() - 1]->neurons[i].derivative;
 				sum += (output[i] - actual[i]) * (output[i] - actual[i]);
-			} primeSum /= output.size(); sum /= (output.size() * 2);
-			for (int i = 0; i < output.size(); i++) {
-				errorPrime[i] = (primeSum);
-				error.push_back(sum);
-			} if (print)cout << "error = " << sum << endl;
+			} sum /= (output.size() * 2);
+			error.push_back(sum);
+			if (print)cout << "error = " << sum << endl;
 
 			value.push_back(output);
 			value.push_back(errorPrime);
@@ -151,8 +147,9 @@ vector<double> NeuralNetwork::backpropagate() {
 		else if (i == (int)(layers.size() - 1)) temp = ((OutputLayer *)layers[i])->backpropagate(temp, learningRate, layers[i - 1]->neurons);
 		else if (i > 0 && (i < (int)(layers.size() - 1))) temp = ((HiddenLayer *)layers[i])->backpropagate(temp, learningRate, layers[i - 1]->neurons);
 		if (debug) cout << "Backpropagation on layer " << i << " finished" << endl;
-	}
-	return temp;
+	} for (int i = 0; i < errorPrime.size(); i++) {
+		errorPrime[i] = 0;
+	} return temp;
 }
 
 struct tm *currentDate() {
@@ -191,4 +188,3 @@ void NeuralNetwork::toFile(int iteration, int numberTrainIterations, int repeatI
 
 	_file.close();
 }
-

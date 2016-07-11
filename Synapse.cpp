@@ -9,7 +9,7 @@
 
 normal_distribution<double> Synapse::d(0, 1);
 
-default_random_engine Synapse::g(5);
+default_random_engine Synapse::g(time(0));
 
 Synapse::Synapse() {
 	// TODO Auto-generated constructor stub
