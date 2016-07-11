@@ -16,8 +16,9 @@ PassiveNeuron::~PassiveNeuron() {
 	// TODO Auto-generated destructor stub
 }
 
-__device__ double PassiveNeuron::get(double input, double scalar) {
+__device__ __host__ double PassiveNeuron::get(double input, double scalar) {
 	activation = input * scalar;
 	derivative = scalar;
-	return activation;
+
+	return 0;
 }

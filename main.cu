@@ -35,8 +35,8 @@ struct tm *getDate() {
 int main(int argc, char *argv[]) {
 	// start program and validate input
 	cout << "Program initializing" << endl;
-	if (argc != 6) {
-		cout << argv[0] << " <training size> <repeat size> <learning rate> <decay rate>" << endl;
+	if (argc < 6) {
+		cout << argv[0] << " <i | b> <training size> <repeat size> <learning rate> <decay rate> <size ...>" << endl;
 		return -1;
 	}
 
@@ -120,12 +120,9 @@ int main(int argc, char *argv[]) {
 	 *
 	 */
 	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
-	size.push_back(imageSize);
+	for (int i = 0; i < (argc - 6); i++) {
+		size.push_back(atoi(argv[i + 6]));
+	}
 	size.push_back(10);
 
 
@@ -193,7 +190,7 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.batch(trainingImages[i], OutputTarget::getTargetOutput(trainingLabels[i]), learningRate, !(absoluteIteration % (trainingSize / updatePoints)), !(absoluteIteration % (trainingSize / updatePoints)));
+				vector<vector<double> > trainingData = network.batch(trainingImages[i], OutputTarget::getTargetOutput(trainingLabels[i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)), !(absoluteIteration % (trainingSize / updatePoints)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
 				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints))) {

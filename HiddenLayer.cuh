@@ -20,10 +20,6 @@ public:
 	bool debug;
 	int currentLayerNeurons;
 	int previousLayerNeurons;
-	int kernelGridHeight;
-	int kernelGridWidth;
-	int kernelBlockHeight;
-	int kernelBlockWidth;
 	HiddenLayer(int w, int d, bool db);
 	virtual ~HiddenLayer();
 	vector<double> feedforward(vector<double> input);

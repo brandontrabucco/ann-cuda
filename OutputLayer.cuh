@@ -17,10 +17,6 @@ public:
 	bool debug;
 	int currentLayerNeurons;
 	int previousLayerNeurons;
-	int kernelGridHeight;
-	int kernelGridWidth;
-	int kernelBlockHeight;
-	int kernelBlockWidth;
 	OutputLayer(int w, int d, bool db);
 	virtual ~OutputLayer();
 	vector<double> feedforward(vector<double> input);

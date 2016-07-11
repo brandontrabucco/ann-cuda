@@ -9,7 +9,7 @@
 
 normal_distribution<double> Synapse::d(0, 1);
 
-default_random_engine Synapse::g(5);
+default_random_engine Synapse::g(time(0));
 
 Synapse::Synapse() {
 	// TODO Auto-generated constructor stub
@@ -22,7 +22,7 @@ Synapse::~Synapse() {
 	// TODO Auto-generated destructor stub
 }
 
-__device__ double Synapse::get(double i) {
+__device__ __host__ double Synapse::get(double i) {
 	input = i;
 	output = (weight * input) + bias;
 	return output;

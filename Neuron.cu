@@ -16,7 +16,7 @@ Neuron::~Neuron() {
 	// TODO Auto-generated destructor stub
 }
 
-__device__ double Neuron::get(double input) {
+__device__ __host__ double Neuron::get(double input) {
 	activation = 1 / (1 + exp(-input));
 	derivative = (1 / (1 + exp(-input))) * (1 - (1 / (1 + exp(-input))));
 	return activation;

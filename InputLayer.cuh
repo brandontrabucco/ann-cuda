@@ -18,8 +18,6 @@ private:
 public:
 	bool debug;
 	int currentLayerNeurons;
-	int kernelGridHeight;
-	int kernelGridWidth;
 	double scalar;
 	InputLayer(int w, double range, bool db);
 	virtual ~InputLayer();
