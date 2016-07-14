@@ -62,12 +62,12 @@ vector<double> OutputLayer::feedforward(vector<double> input) {
 	cudaDeviceSynchronize();
 
 	// release memory from GPU
-	if ((status = cudaFree((void *)&deviceInput)) != 0) cout << "error o-13 " << status << endl;
-	if ((status = cudaFree((void *)&deviceOutput)) != 0) cout << "error o-14 " << status << endl;
-	if ((status = cudaFree((void *)&deviceSum)) != 0) cout << "error o-15 " << status << endl;
-	if ((status = cudaFree((void *)&deviceActivation)) != 0) cout << "error o-16 " << status << endl;
-	if ((status = cudaFree((void *)&deviceSynapses)) != 0) cout << "error o-17 " << status << endl;
-	if ((status = cudaFree((void *)&deviceNeurons)) != 0) cout << "error o-18 " << status << endl;
+	if ((status = cudaFree(deviceInput)) != 0) cout << "error o-13 " << status << endl;
+	if ((status = cudaFree(deviceOutput)) != 0) cout << "error o-14 " << status << endl;
+	if ((status = cudaFree(deviceSum)) != 0) cout << "error o-15 " << status << endl;
+	if ((status = cudaFree(deviceActivation)) != 0) cout << "error o-16 " << status << endl;
+	if ((status = cudaFree(deviceSynapses)) != 0) cout << "error o-17 " << status << endl;
+	if ((status = cudaFree(deviceNeurons)) != 0) cout << "error o-18 " << status << endl;
 	cudaDeviceSynchronize();
 
 	return output;
@@ -101,10 +101,10 @@ vector<double> OutputLayer::backpropagate(vector<double> error, double learningR
 	cudaDeviceSynchronize();
 
 	// release memory from GPU
-	if ((status = cudaFree((void *)&deviceError)) != 0) cout << "error test o-15 " << status << endl;
-	if ((status = cudaFree((void *)&deviceSum)) != 0)cout << "error o-16 " << status << endl;
-	if ((status = cudaFree((void *)&deviceSynapses)) != 0) cout << "error o-17 " << status << endl;
-	if ((status = cudaFree((void *)&devicePreviousLayer)) != 0) cout << "error o-19 " << status << endl;
+	if ((status = cudaFree(deviceError)) != 0) cout << "error test o-15 " << status << endl;
+	if ((status = cudaFree(deviceSum)) != 0)cout << "error o-16 " << status << endl;
+	if ((status = cudaFree(deviceSynapses)) != 0) cout << "error o-17 " << status << endl;
+	if ((status = cudaFree(devicePreviousLayer)) != 0) cout << "error o-19 " << status << endl;
 	cudaDeviceSynchronize();
 
 	return sum;

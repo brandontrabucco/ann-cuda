@@ -18,6 +18,9 @@
 #include <numeric>
 #include <cuda.h>
 
+#define CONVERGENCE_TEST false
+#define TEST_ACCURACY true
+
 using namespace std;
 
 double getMSec() {
@@ -153,10 +156,10 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.increment(trainingImages[i], OutputTarget::getTargetOutput(trainingLabels[i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
+				vector<vector<double> > trainingData = network.increment(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
-				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints))) {
+				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)) && TEST_ACCURACY) {
 					errorData << absoluteIteration;
 					errorData << ", " << trainingData[1][0];
 					errorData << endl;
@@ -173,7 +176,7 @@ int main(int argc, char *argv[]) {
 						}
 					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
 					cout << "Iteration " << absoluteIteration << " " << (getMSec() - iterationStart) << "msecs, ETA " << (((double)(getMSec() - iterationStart)) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
-				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints))) {
+				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints)) && TEST_ACCURACY) {
 					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
 				}
 			}
@@ -190,10 +193,10 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.batch(trainingImages[i], OutputTarget::getTargetOutput(trainingLabels[i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)), !(absoluteIteration % (trainingSize / updatePoints)));
+				vector<vector<double> > trainingData = network.batch(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)), !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
-				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints))) {
+				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)) && TEST_ACCURACY) {
 					errorData << absoluteIteration;
 					errorData << ", " << trainingData[1][0];
 					errorData << endl;
@@ -210,7 +213,7 @@ int main(int argc, char *argv[]) {
 						}
 					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
 					cout << "Iteration " << absoluteIteration << " " << (getMSec() - iterationStart) << "msecs, ETA " << (((double)(getMSec() - iterationStart)) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
-				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints))) {
+				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints)) && TEST_ACCURACY) {
 					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
 				}
 			}

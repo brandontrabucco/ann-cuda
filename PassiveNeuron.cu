@@ -19,6 +19,5 @@ PassiveNeuron::~PassiveNeuron() {
 __device__ __host__ double PassiveNeuron::get(double input, double scalar) {
 	activation = input * scalar;
 	derivative = scalar;
-
-	return 0;
+	return activation;
 }
