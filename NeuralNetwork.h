@@ -31,9 +31,9 @@ public:
 	NeuralNetwork(vector<int> size, double range, double rate, bool d);
 	virtual ~NeuralNetwork();
 	vector<double> classify(vector<double> input);
-	vector<vector<double> > increment(vector<double> input, vector<double> actual, double rate, bool print);
+	vector<vector<double> > online(vector<double> input, vector<double> actual, double rate, bool print);
 	vector<vector<double> > batch(vector<double> input, vector<double> actual, double rate, bool print, bool update);
-	void toFile(int i, int numberTrainIterations, int repeatImages, double decay);
+	void toFile(int iteration, int trainingSet, int epoch, double decay);
 };
 
 #endif /* NETWORK_H_ */
