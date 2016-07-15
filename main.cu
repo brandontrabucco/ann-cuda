@@ -23,7 +23,7 @@
 
 using namespace std;
 
-double getMSec() {
+long long getMSec() {
 	struct timeval tp;
 	gettimeofday(&tp, NULL);
 	return tp.tv_sec * 1000 + tp.tv_usec / 1000;
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 	// start program and validate input
 	cout << "Program initializing" << endl;
 	if (argc < 6) {
-		cout << argv[0] << " <i | b> <training size> <repeat size> <learning rate> <decay rate> <size ...>" << endl;
+		cout << argv[0] << " <o | b> <training size> <repeat size> <learning rate> <decay rate> <size ...>" << endl;
 		return -1;
 	}
 
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.increment(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
+				vector<vector<double> > trainingData = network.online(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
 				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)) && TEST_ACCURACY) {
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 							c += 1;
 						}
 					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
-					cout << "Iteration " << absoluteIteration << " " << (getMSec() - iterationStart) << "msecs, ETA " << (((double)(getMSec() - iterationStart)) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
+					cout << "Iteration " << absoluteIteration << " " << (((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart)) << "msecs, ETA " << (((double)(((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart))) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
 				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints)) && TEST_ACCURACY) {
 					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
 				}
@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 							c += 1;
 						}
 					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
-					cout << "Iteration " << absoluteIteration << " " << (getMSec() - iterationStart) << "msecs, ETA " << (((double)(getMSec() - iterationStart)) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
+					cout << "Iteration " << absoluteIteration << " " << (((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart)) << "msecs, ETA " << (((double)(((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart))) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
 				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints)) && TEST_ACCURACY) {
 					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
 				}

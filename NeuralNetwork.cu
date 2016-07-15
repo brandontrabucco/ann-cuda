@@ -70,7 +70,7 @@ vector<double> NeuralNetwork::feedforward(vector<double> input) {
  * 	Train the Neural Network using Incremental updates
  *
  */
-vector<vector<double> > NeuralNetwork::increment(vector<double> input, vector<double> actual, double rate, bool print) {
+vector<vector<double> > NeuralNetwork::online(vector<double> input, vector<double> actual, double rate, bool print) {
 	if (input.size() != layers[0]->neurons.size() ||
 			actual.size() != layers[layers.size() - 1]->neurons.size()) {
 		cout << "Illegal Argument at Network::train(vector<double> input, vector<double> actual) " << input.size() << " " << actual.size() << endl;
