@@ -1,5 +1,11 @@
 #include "networkKernels.cuh"
 
+long long getNanoSec() {
+	struct timeval tp;
+	gettimeofday(&tp, NULL);
+	return tp.tv_sec * 1000000 + tp.tv_usec;
+}
+
 __global__ void inputNeuronKernel(double *input, PassiveNeuron nodes[], double scalar, double *output, int nNeurons, int nPerThread, int nThreads) {
 	for (int i = 0; i < nPerThread; i++) {
 		int neuronId = threadIdx.x + (i * nThreads);

@@ -7,6 +7,10 @@
 
 #include "NeuralNetwork.cuh"
 
+long long NeuralNetwork::overhead = 0;
+
+long long NeuralNetwork::computation = 0;
+
 /**
  *
  * 	Initialize the Neural Network

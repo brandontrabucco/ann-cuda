@@ -42,6 +42,7 @@ vector<double> HiddenLayer::feedforward(vector<double> input) {
 
 	// copy memory to device
 	int status;
+	long long startTime = getNanoSec();
 	if ((status = cudaMalloc((void **)&deviceInput, (input.size() * sizeof(double)))) != 0) cout << "error h-1 " << status << endl;
 	if ((status = cudaMalloc((void **)&deviceOutput, (synapses.size() * sizeof(double)))) != 0) cout << "error h-2 " << status << endl;
 	if ((status = cudaMalloc((void **)&deviceSum, (neurons.size() * sizeof(double)))) != 0) cout << "error h-3 " << status << endl;
@@ -53,13 +54,16 @@ vector<double> HiddenLayer::feedforward(vector<double> input) {
 	if ((status = cudaMemcpy(&deviceSynapses[0], &synapses[0], (synapses.size() * sizeof(Synapse)), cudaMemcpyHostToDevice)) != 0) cout << "error h-8 " << status << endl;
 	if ((status = cudaMemcpy(&deviceNeurons[0], &neurons[0], (neurons.size() * sizeof(Neuron)), cudaMemcpyHostToDevice)) != 0) cout << "error h-9 " << status << endl;
 	if ((status = cudaMemset(&deviceSum[0], 0, (neurons.size() * sizeof(double)))) != 0) cout << "error h-10 " << status << endl;
+	NeuralNetwork::overhead += (getNanoSec() - (startTime));
 
-
+	startTime = getNanoSec();
 	KernelAdapter::startSynapseKernel(deviceInput, deviceSynapses, deviceOutput, currentLayerNeurons, previousLayerNeurons);
 	KernelAdapter::startSumInputKernel(deviceOutput, deviceSum, currentLayerNeurons, previousLayerNeurons);
 	KernelAdapter::startNeuronKernel(deviceSum, deviceNeurons, deviceActivation, currentLayerNeurons);
+	NeuralNetwork::computation += (getNanoSec() - (startTime));
 
 	// get the output from the device
+	startTime = getNanoSec();
 	if ((status = cudaMemcpy(&output[0], &deviceActivation[0],(neurons.size() * sizeof(double)), cudaMemcpyDeviceToHost)) != 0) cout << "error h-11 " << status << endl;
 	if ((status = cudaMemcpy(&neurons[0], &deviceNeurons[0],(neurons.size() * sizeof(Neuron)), cudaMemcpyDeviceToHost)) != 0) cout << "error h-12 " << status << endl;
 	cudaDeviceSynchronize();
@@ -72,6 +76,8 @@ vector<double> HiddenLayer::feedforward(vector<double> input) {
 	if ((status = cudaFree(deviceSynapses)) != 0) cout << "error h-17 " << status << endl;
 	if ((status = cudaFree(deviceNeurons)) != 0) cout << "error h-18 " << status << endl;
 	cudaDeviceSynchronize();
+	NeuralNetwork::overhead += (getNanoSec() - (startTime));
+
 	return output;
 }
 
@@ -86,6 +92,7 @@ vector<double> HiddenLayer::backpropagate(vector<double> error, double learningR
 		Neuron *deviceNeurons, *devicePreviousLayer;
 
 		int status;
+		long long startTime = getNanoSec();
 		if ((status = cudaMalloc((void **)&deviceError, (error.size() * sizeof(double)))) != 0) cout << "error h-1 " << status << endl;
 		if ((status = cudaMalloc((void **)&deviceSum, (previousLayerNeurons * sizeof(double)))) != 0) cout << "error h-2 " << status << endl;
 		if ((status = cudaMalloc((void **)&deviceSynapses, (synapses.size() * sizeof(Synapse)))) != 0) cout << "error h-4 " << status << endl;
@@ -97,11 +104,14 @@ vector<double> HiddenLayer::backpropagate(vector<double> error, double learningR
 		if ((status = cudaMemcpy(&deviceNeurons[0], &neurons[0], (neurons.size() * sizeof(Neuron)), cudaMemcpyHostToDevice)) != 0) cout << "error h-10 " << status << endl;
 		if ((status = cudaMemcpy(&devicePreviousLayer[0], &previousLayer[0], (previousLayer.size() * sizeof(Neuron)), cudaMemcpyHostToDevice)) != 0) cout << "error h-11 " << status << endl;
 		if ((status = cudaMemset(&deviceSum[0], 0, (previousLayerNeurons * sizeof(double))) != 0)) cout << "error h-12 " << status << endl;
+		NeuralNetwork::overhead += (getNanoSec() - startTime);
 
-
+		startTime = getNanoSec();
 		KernelAdapter::startHiddenLayerGradientDescentKernel(deviceError, learningRate, deviceNeurons, devicePreviousLayer, deviceSynapses, currentLayerNeurons, previousLayerNeurons);
 		KernelAdapter::startHiddenLayerSumErrorKernel(deviceError, deviceNeurons, deviceSynapses, deviceSum, currentLayerNeurons, previousLayerNeurons);
+		NeuralNetwork::computation += (getNanoSec() - startTime);
 
+		startTime = getNanoSec();
 		if ((status = cudaMemcpy(&synapses[0], &deviceSynapses[0],(synapses.size() * sizeof(Synapse)), cudaMemcpyDeviceToHost)) != 0) cout << "error h-13 " << status << endl;
 		if ((status = cudaMemcpy(&sum[0], &deviceSum[0],(previousLayerNeurons * sizeof(double)), cudaMemcpyDeviceToHost)) != 0) cout << "error h-14 " << status << endl;
 		cudaDeviceSynchronize();
@@ -113,6 +123,7 @@ vector<double> HiddenLayer::backpropagate(vector<double> error, double learningR
 		if ((status = cudaFree(deviceNeurons)) != 0) cout << "error h-18 " << status << endl;
 		if ((status = cudaFree(devicePreviousLayer)) != 0) cout << "error h-19 " << status << endl;
 		cudaDeviceSynchronize();
+		NeuralNetwork::overhead += (getNanoSec() - startTime);
 
 		return sum;
 }

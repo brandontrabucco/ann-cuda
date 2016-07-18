@@ -5,10 +5,13 @@
 #include "Neuron.cuh"
 #include "PassiveNeuron.cuh"
 #include "Synapse.cuh"
+#include <sys/time.h>
 #include <iostream>
 #include <math.h>
 
 using namespace std;
+
+long long getNanoSec();
 
 /**
  *

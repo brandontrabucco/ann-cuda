@@ -30,6 +30,7 @@ private:
 	vector<double> backpropagate();
 	vector<double> errorPrime;
 public:
+	static long long overhead, computation;
 	NeuralNetwork(vector<int> size, double range, double rate, bool d);
 	virtual ~NeuralNetwork();
 	vector<double> classify(vector<double> input);

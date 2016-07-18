@@ -59,8 +59,8 @@ int main(int argc, char *argv[]) {
 	int trainingSize = atoi(argv[2]);
 	int repeatImages = atoi(argv[3]);
 	int testSize = 1000;
-	int updatePoints = 100;
-	int savePoints = 10;
+	int updatePoints = (repeatImages < 100) ? repeatImages : 100;
+	int savePoints = (repeatImages < 10) ? repeatImages : 10;
 	double learningRate = atof(argv[4]), decay = atof(argv[5]);
 	long long networkStart, networkEnd, sumTime = 0, iterationStart;
 	bool enableBatch = (argv[1][0] == 'b');
@@ -82,6 +82,8 @@ int main(int argc, char *argv[]) {
 			"-learning_" << decay << "-decay.csv";
 	ostringstream timingDataFileName;
 	timingDataFileName << "/u/trabucco/Desktop/MNIST_Data_Files/GPU-" << (enableBatch ? "Batch" : "Incremental") << "-Timing.csv";
+	ostringstream overheadDataFileName;
+	overheadDataFileName << "/u/trabucco/Desktop/MNIST_Data_Files/GPU-" << (enableBatch ? "Batch" : "Incremental") << "-Overhead.csv";
 	ostringstream accuracyDataFileName;
 	accuracyDataFileName << "/u/trabucco/Desktop/MNIST_Data_Files/" <<
 			(getDate()->tm_year + 1900) << "-" << (getDate()->tm_mon + 1) << "-" << getDate()->tm_mday <<
@@ -95,6 +97,8 @@ int main(int argc, char *argv[]) {
 	if (!errorData.is_open()) return -1;
 	ofstream timingData(timingDataFileName.str(), ios::app);
 	if (!timingData.is_open()) return -1;
+	ofstream overheadData(overheadDataFileName.str(), ios::app);
+	if (!overheadData.is_open()) return -1;
 	ofstream accuracyData(accuracyDataFileName.str());
 	if (!accuracyData.is_open()) return -1;
 
@@ -156,10 +160,10 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.online(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
+				vector<vector<double> > trainingData = network.online(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, (!(r % (repeatImages / updatePoints))) && (i == (trainingSize - 1)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
-				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)) && TEST_ACCURACY) {
+				if (!(r % (repeatImages / updatePoints)) && (i == (trainingSize - 1)) && TEST_ACCURACY) {
 					errorData << absoluteIteration;
 					errorData << ", " << trainingData[1][0];
 					errorData << endl;
@@ -176,7 +180,7 @@ int main(int argc, char *argv[]) {
 						}
 					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
 					cout << "Iteration " << absoluteIteration << " " << (((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart)) << "msecs, ETA " << (((double)(((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart))) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
-				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints)) && TEST_ACCURACY) {
+				} if (!(r % (repeatImages / savePoints)) && (i == (trainingSize - 1)) && TEST_ACCURACY) {
 					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
 				}
 			}
@@ -193,10 +197,10 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.batch(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)), !(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)));
+				vector<vector<double> > trainingData = network.batch(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, (!(r % (repeatImages / updatePoints)) && (i == (trainingSize - 1))), (i == (trainingSize - 1)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
-				if (!(absoluteIteration % ((trainingSize * repeatImages) / updatePoints)) && TEST_ACCURACY) {
+				if (!(r % ((repeatImages) / updatePoints)) && (i == (trainingSize - 1)) && TEST_ACCURACY) {
 					errorData << absoluteIteration;
 					errorData << ", " << trainingData[1][0];
 					errorData << endl;
@@ -213,7 +217,7 @@ int main(int argc, char *argv[]) {
 						}
 					} accuracyData << absoluteIteration << ", " << (100 * c / testSize) << endl;
 					cout << "Iteration " << absoluteIteration << " " << (((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart)) << "msecs, ETA " << (((double)(((getMSec() - iterationStart) / updatePoints) + (networkEnd - networkStart))) * ((trainingSize * repeatImages) - (double)absoluteIteration) / 1000.0 / 60.0) << "min" << endl;
-				} if (!(absoluteIteration % ((trainingSize * repeatImages) / savePoints)) && TEST_ACCURACY) {
+				} if (!(r % (repeatImages / savePoints)) && (i == (trainingSize - 1)) && TEST_ACCURACY) {
 					network.toFile(absoluteIteration, trainingSize, repeatImages, decay);
 				}
 			}
@@ -223,11 +227,13 @@ int main(int argc, char *argv[]) {
 
 	// end program and close file streams
 	timingData << (accumulate(size.begin(), size.end(), 0)) << ", " << sumTime << endl;
+	overheadData << (accumulate(size.begin(), size.end(), 0)) << ", " << (((double)NeuralNetwork::overhead)/((double)NeuralNetwork::computation)) << endl;
 	cout << "Total computation time " << sumTime << "msecs" << endl;
 	cout << "Program finished" << endl;
 
 	errorData.close();
 	timingData.close();
+	overheadData.close();
 	accuracyData.close();
 
 	return 0;

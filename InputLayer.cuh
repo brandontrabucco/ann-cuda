@@ -11,6 +11,7 @@
 #include "Layer.cuh"
 #include "PassiveNeuron.cuh"
 #include "networkKernels.cuh"
+#include "NeuralNetwork.cuh"
 #include <cuda.h>
 
 class InputLayer: public Layer {

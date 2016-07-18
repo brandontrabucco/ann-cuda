@@ -10,6 +10,7 @@
 
 #include "Layer.cuh"
 #include "networkKernels.cuh"
+#include "NeuralNetwork.cuh"
 #include <cuda.h>
 #include <math.h>
 
