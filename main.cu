@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.online(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, (!(r % (repeatImages / updatePoints))) && (i == (trainingSize - 1)));
+				vector<vector<double> > trainingData = network.online(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getOutputFromTarget(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, (!(r % (repeatImages / updatePoints))) && (i == (trainingSize - 1)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
 				if (!(r % (repeatImages / updatePoints)) && (i == (trainingSize - 1)) && TEST_ACCURACY) {
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
 				iterationStart = getMSec();
 
 				networkStart = getMSec();
-				vector<vector<double> > trainingData = network.batch(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getTargetOutput(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, (!(r % (repeatImages / updatePoints)) && (i == (trainingSize - 1))), (i == (trainingSize - 1)));
+				vector<vector<double> > trainingData = network.batch(trainingImages[CONVERGENCE_TEST ? 0 : i], OutputTarget::getOutputFromTarget(trainingLabels[CONVERGENCE_TEST ? 0 : i]), learningRate, (!(r % (repeatImages / updatePoints)) && (i == (trainingSize - 1))), (i == (trainingSize - 1)));
 				networkEnd = getMSec();
 				sumTime += (networkEnd - networkStart);
 				if (!(r % ((repeatImages) / updatePoints)) && (i == (trainingSize - 1)) && TEST_ACCURACY) {

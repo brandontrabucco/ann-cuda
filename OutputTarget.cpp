@@ -20,7 +20,7 @@ const double OutputTarget::classifiers[classes][nodes] = {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
 };
 
-vector<double> OutputTarget::getTargetOutput(int c) {
+vector<double> OutputTarget::getOutputFromTarget(int c) {
 	return vector<double>(classifiers[c], classifiers[c] + nodes);
 }
 
