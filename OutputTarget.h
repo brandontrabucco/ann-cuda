@@ -20,7 +20,7 @@ private:
 	static const int classes = 10;
 	static const double classifiers[classes][nodes];
 public:
-	static vector<double> getTargetOutput(int c);
+	static vector<double> getOutputFromTarget(int c);
 	static int getTargetFromOutput(vector<double> output);
 };
 
